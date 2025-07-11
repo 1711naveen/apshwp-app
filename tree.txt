@@ -1,0 +1,60 @@
+├── app
+│   ├── auth
+│   │   ├── login.js
+│   │   ├── phone-login.js
+│   │   ├── signup.js
+│   │   └── success.js
+│   ├── components
+│   │   ├── Card.tsx
+│   │   ├── CategoryCard.tsx
+│   │   ├── QuizBanner.tsx
+│   │   ├── RecentActivityCard.tsx
+│   │   └── SearchBox.tsx
+│   ├── index.tsx
+│   ├── _layout.tsx
+│   ├── onboarding
+│   │   ├── index.tsx
+│   │   ├── page1.js
+│   │   ├── page2.js
+│   │   ├── page3.js
+│   └── (tabs)
+│       ├── account.tsx
+│       ├── course
+│       │   ├── [id].tsx
+│       │   ├── index.tsx
+│       │   ├── _layout.tsx
+│       │   └── quiz
+│       │       ├── [id].tsx
+│       │       ├── index.tsx
+│       │       └── _layout.tsx
+│       ├── home.tsx
+│       ├── _layout.tsx
+│       ├── message.tsx
+│       └── search.tsx
+├── app.json
+├── assets
+│   ├── fonts
+│   │   └── SpaceMono-Regular.ttf
+│   └── images
+│       ├── adaptive-icon.png
+│       ├── app-images
+│       │   ├── illustration_1.png
+│       │   ├── illustration_2.png
+│       │   └── illustration_3.png
+│       ├── favicon.png
+│       ├── icon.png
+│       ├── partial-react-logo.png
+│       ├── react-logo@2x.png
+│       ├── react-logo@3x.png
+│       ├── react-logo.png
+│       └── splash-icon.png
+├── eas.json
+├── eslint.config.js
+├── expo-env.d.ts
+├── index.js
+├── metro.config.js
+├── package.json
+├── package-lock.json
+├── README.md
+├── tree.txt
+└── tsconfig.json

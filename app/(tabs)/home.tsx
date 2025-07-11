@@ -1,32 +1,89 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, ScrollView, Button } from "react-native";
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions } from "react-native";
+import EModuleCard from "../components/EModuleCard";
+import Flowchart from "../components/Flowchart";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
+
+const { width } = Dimensions.get("window");
+
+const modules = [
+  {
+    id: "1",
+    title: "Metabolic Health (NCDs Prevention)",
+    image: require("../../assets/images/app-images/illustration_1.png"),
+  },
+  {
+    id: "2",
+    title: "Road Safety",
+    image: require("../../assets/images/app-images/illustration_2.png"),
+  },
+  {
+    id: "3",
+    title: "Heart Health Awareness",
+    image: require("../../assets/images/app-images/illustration_3.png"),
+  },
+];
 
 export default function Home() {
+  const [name, setName] = useState('');
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const storedUser = await AsyncStorage.getItem('user');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        setName(user.name);
+      }
+    };
+    loadUser();
+  }, []);
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Hi, Kristin</Text>
-      <Text style={styles.subtitle}>Let’s start learning</Text>
-
-      <View style={styles.progressContainer}>
-        <Text>Learned today</Text>
-        <Text style={styles.timeText}>46 min / 60 min</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.greeting}>Hi, {name}</Text>
+          <Text style={styles.subGreeting}>Let’s start learning</Text>
+        </View>
+        {/* Optional profile picture */}
+        <Image
+          source={require("../../assets/images/app-images/Avatar.png")}
+          style={styles.avatar}
+        />
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>What do you want to learn today?</Text>
-        <Button title="Get Started" onPress={() => {}} />
+      {/* Flowchart Box */}
+      <View style={styles.flowchartBox}>
+        <Text style={styles.flowchartTitle}>Calling All Adolescents and Youth!</Text>
+        <Flowchart />
       </View>
 
-      <View style={styles.learningPlan}>
-        <Text style={styles.sectionTitle}>Learning Plan</Text>
-        <Text>Packaging Design 40/48</Text>
-        <Text>Product Design 6/24</Text>
+      {/* E-Module Section */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>E-Module</Text>
+        <TouchableOpacity>
+          <Text style={styles.viewAll}>View All</Text>
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.meetup}>
-        <Text style={styles.sectionTitle}>Meetup</Text>
-        <Text>Off-line exchange of learning experiences</Text>
-      </View>
+      {/* Horizontal Scroll of E-Modules */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.moduleScroll}
+      >
+        {modules.map((mod) => (
+          <EModuleCard
+            key={mod.id}
+            title={mod.title}
+            image={mod.image}
+            onPress={() => {
+              console.log("Pressed:", mod.title);
+            }}
+          />
+        ))}
+      </ScrollView>
     </ScrollView>
   );
 }
@@ -34,48 +91,71 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#F2F2F5",
+    paddingHorizontal: 20,
+  },
+  header: {
+    marginTop: 40,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  greeting: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#0D0D26",
+  },
+  subGreeting: {
+    fontSize: 14,
+    color: "#A0A0B2",
+    marginTop: 4,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#ddd",
+  },
+  flowchartBox: {
     backgroundColor: "#fff",
     padding: 20,
+    borderRadius: 12,
+    marginTop: 30,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginTop: 40,
-  },
-  subtitle: {
+  flowchartTitle: {
     fontSize: 16,
-    color: "gray",
-    marginBottom: 20,
-  },
-  progressContainer: {
-    marginBottom: 20,
-    backgroundColor: "#f0f0f0",
-    padding: 10,
-    borderRadius: 8,
-  },
-  timeText: {
     fontWeight: "bold",
-  },
-  card: {
-    backgroundColor: "#cce7ff",
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  cardTitle: {
-    fontSize: 16,
+    color: "#000",
     marginBottom: 10,
+    textAlign: "center",
   },
-  learningPlan: {
-    marginBottom: 20,
+  flowchartImage: {
+    width: "100%",
+    height: 180,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 30,
+    marginBottom: 10,
   },
   sectionTitle: {
+    fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 10,
+    color: "#0D0D26",
   },
-  meetup: {
-    backgroundColor: "#e6ccff",
-    padding: 20,
-    borderRadius: 10,
+  viewAll: {
+    color: "#3D5CFF",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+  moduleScroll: {
+    paddingBottom: 20,
   },
 });

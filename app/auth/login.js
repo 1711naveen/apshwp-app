@@ -1,46 +1,49 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   Alert,
-  Image,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
-import { useRouter } from "expo-router";
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [email, setEmail] = useState('Cooper_Kristin@gmail.com');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('8874752747');
+  const [password, setPassword] = useState('Shivam@421');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const handleLogin = async () => {
     try {
-      const response = await fetch('https://dummyjson.com/auth/login', {
+      const response = await fetch('https://apshwp.ap.gov.in/api/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          username: email,     // use email field as username for testing
+          login: email,
           password: password,
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        Alert.alert('Login Failed', errorData.message || 'Something went wrong.');
+      const data = await response.json();
+      console.log('Login API response:', data);
+
+      if (!data.status) {
+        Alert.alert('Login Failed', data.message || 'Something went wrong.');
         return;
       }
 
-      const data = await response.json();
-      console.log('Login Success:', data);
+      // Save user data
+      await AsyncStorage.setItem('user', JSON.stringify(data.data));
 
-      Alert.alert('Success', `Welcome, ${data.username}!`);
-      // Save token or user info here if needed
+      Alert.alert('Success', `Welcome, ${data.data.name}!`);
+
       router.replace('/(tabs)/home');
     } catch (error) {
       console.error(error);
@@ -177,6 +180,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
     fontSize: 16,
+    color: '#000',
   },
   passwordContainer: {
     flexDirection: 'row',
