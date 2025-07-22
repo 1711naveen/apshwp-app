@@ -153,7 +153,7 @@ function Home() {
       <Modal
         visible={menuVisible}
         transparent={true}
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setMenuVisible(false)}
       >
         <TouchableOpacity 
@@ -161,7 +161,10 @@ function Home() {
           onPress={() => setMenuVisible(false)}
           activeOpacity={1}
         >
-          <View style={styles.menuContainer}>
+          <TouchableOpacity 
+            style={styles.menuContainer}
+            activeOpacity={1}
+          >
             {/* Profile Section */}
             <View style={styles.profileSection}>
               <Image
@@ -232,7 +235,7 @@ function Home() {
                 <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
               </TouchableOpacity>
             </View>
-          </View>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
 
@@ -331,36 +334,39 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-end',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
   },
   menuContainer: {
     backgroundColor: '#fff',
-    width: width * 0.8,
-    height: '100%',
-    paddingTop: 50,
+    width: '100%',
+    maxHeight: '70%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 20,
     paddingHorizontal: 20,
+    paddingBottom: 40,
     shadowColor: '#000',
-    shadowOffset: { width: -2, height: 0 },
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 10,
   },
   profileSection: {
     alignItems: 'center',
-    paddingVertical: 30,
+    paddingVertical: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5E5',
     marginBottom: 20,
   },
   menuAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 16,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginBottom: 12,
   },
   menuUserName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#0D0D26',
     marginBottom: 4,
@@ -370,15 +376,16 @@ const styles = StyleSheet.create({
     color: '#A0A0B2',
   },
   menuItems: {
-    flex: 1,
+    paddingVertical: 10,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderRadius: 12,
-    marginBottom: 8,
+    marginBottom: 4,
+    backgroundColor: '#F8F9FA',
   },
   menuItemText: {
     fontSize: 16,
@@ -390,7 +397,7 @@ const styles = StyleSheet.create({
   menuDivider: {
     height: 1,
     backgroundColor: '#E5E5E5',
-    marginVertical: 16,
+    marginVertical: 12,
   },
 });
 
