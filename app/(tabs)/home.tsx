@@ -1,9 +1,9 @@
-import React from "react";
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions } from "react-native";
-import EModuleCard from "../components/EModuleCard";
-import Flowchart from "../components/Flowchart";
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
+import React, { useEffect, useState } from "react";
+import { Dimensions, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const { width } = Dimensions.get("window");
 
@@ -25,65 +25,217 @@ const modules = [
   },
 ];
 
-export default function Home() {
+function Home() {
   const [name, setName] = useState('');
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [userInfo, setUserInfo] = useState<any>(null);
 
   useEffect(() => {
     const loadUser = async () => {
-      const storedUser = await AsyncStorage.getItem('user');
-      if (storedUser) {
-        const user = JSON.parse(storedUser);
-        setName(user.name);
+      try {
+        const storedUser = await AsyncStorage.getItem('userInfo');
+        if (storedUser) {
+          const user = JSON.parse(storedUser);
+          setUserInfo(user);
+          // Try different possible name fields from the JWT token
+          const userName = user.name || user.username || user.full_name || user.firstName || 'User';
+          setName(userName);
+        }
+      } catch (error) {
+        console.error('Error loading user info:', error);
+        setName('User');
       }
     };
     loadUser();
   }, []);
+
+  const router = useRouter();
+
+  const openResourcesLink = async () => {
+    try {
+      await WebBrowser.openBrowserAsync('https://apshwp.ap.gov.in/en#resourceSection');
+      setMenuVisible(false);
+    } catch (error) {
+      console.error('Error opening browser:', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('authToken');
+      await AsyncStorage.removeItem('userInfo');
+      setMenuVisible(false);
+      router.replace('/auth/login');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Hi, {name}</Text>
-          <Text style={styles.subGreeting}>Let’s start learning</Text>
+        <TouchableOpacity 
+          style={styles.hamburgerButton}
+          onPress={() => setMenuVisible(true)}
+        >
+          <Ionicons name="menu-outline" size={28} color="#0D0D26" />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.greeting}>Hi, {name || 'User'}!</Text>
+          <Text style={styles.subGreeting}>Let's start learning</Text>
         </View>
-        {/* Optional profile picture */}
-        <Image
-          source={require("../../assets/images/app-images/Avatar.png")}
-          style={styles.avatar}
-        />
+        <TouchableOpacity onPress={() => setMenuVisible(true)}>
+          <Image
+            source={require("../../assets/images/app-images/Avatar.png")}
+            style={styles.avatar}
+          />
+        </TouchableOpacity>
       </View>
 
       {/* Flowchart Box */}
-      <View style={styles.flowchartBox}>
-        <Text style={styles.flowchartTitle}>Calling All Adolescents and Youth!</Text>
-        <Flowchart />
+      <View >
+        <Image
+          source={require("../../assets/images/app-images/flowchart.png")}
+          style={styles.flowchartImage}
+          resizeMode="contain"
+        />
       </View>
 
       {/* E-Module Section */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>E-Module</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/course')}>
           <Text style={styles.viewAll}>View All</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Horizontal Scroll of E-Modules */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.moduleScroll}
       >
-        {modules.map((mod) => (
-          <EModuleCard
-            key={mod.id}
-            title={mod.title}
-            image={mod.image}
-            onPress={() => {
-              console.log("Pressed:", mod.title);
-            }}
+        <TouchableOpacity
+          onPress={() => console.log("Pressed: Metabolic Health (NCDs Prevention)")}
+          style={styles.imageWrapper}
+        >
+          <Image
+            source={require("../../assets/images/app-images/illustration_1.png")}
+            style={styles.moduleImage}
+            resizeMode="cover"
           />
-        ))}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => console.log("Pressed: Road Safety")}
+          style={styles.imageWrapper}
+        >
+          <Image
+            source={require("../../assets/images/app-images/illustration_1.png")}
+            style={styles.moduleImage}
+            resizeMode="cover"
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => console.log("Pressed: Heart Health Awareness")}
+          style={styles.imageWrapper}
+        >
+          <Image
+            source={require("../../assets/images/app-images/illustration_1.png")}
+            style={styles.moduleImage}
+            resizeMode="cover"
+          />
+        </TouchableOpacity>
       </ScrollView>
+
+      {/* Hamburger Menu Modal */}
+      <Modal
+        visible={menuVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          onPress={() => setMenuVisible(false)}
+          activeOpacity={1}
+        >
+          <View style={styles.menuContainer}>
+            {/* Profile Section */}
+            <View style={styles.profileSection}>
+              <Image
+                source={require("../../assets/images/app-images/Avatar.png")}
+                style={styles.menuAvatar}
+              />
+              <Text style={styles.menuUserName}>{name || 'User'}</Text>
+              <Text style={styles.menuUserEmail}>
+                {userInfo?.email || userInfo?.login || 'user@example.com'}
+              </Text>
+            </View>
+
+            {/* Menu Items */}
+            <View style={styles.menuItems}>
+              <TouchableOpacity 
+                style={styles.menuItem}
+                onPress={openResourcesLink}
+              >
+                <Ionicons name="library-outline" size={24} color="#3D5CFF" />
+                <Text style={styles.menuItemText}>Resources</Text>
+                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  router.push('/course');
+                }}
+              >
+                <Ionicons name="book-outline" size={24} color="#3D5CFF" />
+                <Text style={styles.menuItemText}>Courses</Text>
+                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  router.push('/quiz');
+                }}
+              >
+                <Ionicons name="help-circle-outline" size={24} color="#3D5CFF" />
+                <Text style={styles.menuItemText}>Quiz</Text>
+                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.menuItem}
+                onPress={() => {
+                  setMenuVisible(false);
+                  router.push('/account');
+                }}
+              >
+                <Ionicons name="person-outline" size={24} color="#3D5CFF" />
+                <Text style={styles.menuItemText}>Profile</Text>
+                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+              </TouchableOpacity>
+
+              <View style={styles.menuDivider} />
+
+              <TouchableOpacity 
+                style={styles.menuItem}
+                onPress={handleLogout}
+              >
+                <Ionicons name="log-out-outline" size={24} color="#FF6B6B" />
+                <Text style={[styles.menuItemText, { color: '#FF6B6B' }]}>Logout</Text>
+                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
     </ScrollView>
   );
 }
@@ -99,6 +251,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  hamburgerButton: {
+    padding: 4,
+  },
+  headerCenter: {
+    flex: 1,
+    marginLeft: 16,
   },
   greeting: {
     fontSize: 24,
@@ -158,4 +317,82 @@ const styles = StyleSheet.create({
   moduleScroll: {
     paddingBottom: 20,
   },
+  imageWrapper: {
+    marginRight: 16,
+    borderRadius: 12,
+    overflow: "hidden",
+  },
+  moduleImage: {
+    width: 200,
+    height: 120,
+    borderRadius: 12,
+  },
+  // Hamburger Menu Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+  },
+  menuContainer: {
+    backgroundColor: '#fff',
+    width: width * 0.8,
+    height: '100%',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: -2, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  profileSection: {
+    alignItems: 'center',
+    paddingVertical: 30,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5E5',
+    marginBottom: 20,
+  },
+  menuAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 16,
+  },
+  menuUserName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#0D0D26',
+    marginBottom: 4,
+  },
+  menuUserEmail: {
+    fontSize: 14,
+    color: '#A0A0B2',
+  },
+  menuItems: {
+    flex: 1,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  menuItemText: {
+    fontSize: 16,
+    color: '#0D0D26',
+    marginLeft: 16,
+    flex: 1,
+    fontWeight: '500',
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: '#E5E5E5',
+    marginVertical: 16,
+  },
 });
+
+export default Home;
+

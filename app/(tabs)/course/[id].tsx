@@ -1,166 +1,226 @@
-import React from 'react';
-import { ScrollView, View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { Link, useLocalSearchParams } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+} from 'react-native';
+import { WebView } from 'react-native-webview';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
-const fakeCourseData = {
-  id: 'metabolic-health',
-  title: 'Metabolic Health: Understanding NCDs Prevention',
-  subtitle: 'Learn how to prevent non-communicable diseases through better metabolic health.',
-  rating: 4.8,
-  reviewsCount: 320,
-  students: 1200,
-  price: '₹999.00',
-  whatYouWillLearn: [
-    'Understand metabolic health basics.',
-    'Identify metabolic dysfunction.',
-    'Learn strategies for prevention.',
-    'Understand impacts of lifestyle choices.',
-  ],
-  courseIncludes: [
-    '10 hours on-demand video',
-    '5 downloadable resources',
-    'Full lifetime access',
-    'Certificate of completion',
-  ],
-  requirements: [
-    'No prior medical knowledge required.',
-    'Willingness to learn about health topics.',
-  ],
-  description:
-    'This course dives into the science of metabolic health and practical ways to prevent non-communicable diseases (NCDs). Perfect for health professionals, students, and anyone interested in wellness.',
-  instructor: {
-    name: 'Dr. Anjali Mehra',
-    bio: 'A leading expert in metabolic health with over 15 years of experience.',
-    image: require('../../../assets/images/app-images/illustration_2.png'),
-  },
-  sections: [
-    {
-      title: 'Introduction',
-      lectures: [
-        'Welcome to the Course',
-        'Why Metabolic Health Matters',
-      ],
-    },
-    {
-      title: 'Core Concepts',
-      lectures: [
-        'What is Metabolic Dysfunction?',
-        'Lifestyle Changes for Health',
-      ],
-    },
-    {
-      title: 'Practical Strategies',
-      lectures: [
-        'Designing a Healthy Routine',
-        'Resources and Next Steps',
-      ],
-    },
-  ],
+const { width } = Dimensions.get('window');
+
+type Course = {
+  id: string;
+  title: string;
+  headerImage: any;
+  videoUrl: string;
+  topics: string[];
 };
 
-export default function CourseDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+export default function CourseDetail() {
+  const { id } = useLocalSearchParams();
+  const router = useRouter();
 
-  // In real app, fetch by id!
-  const course = fakeCourseData;
+  const courses: Record<string, Course> = {
+    "1": {
+      id: "1",
+      title: 'Metabolic Health (NCDs Prevention)',
+      headerImage: require('../../../assets/images/app-images/illustration_1.png'),
+      videoUrl: 'https://www.youtube.com/embed/O0lBFHqPZ4Y',
+      topics: [
+        'Introduction to Metabolic health',
+        'What is Metabolic Dysfunction?',
+        'Improving Metabolic Health',
+        'Dangers of Substance Abuse',
+      ],
+    },
+    "2": {
+      id: "2",
+      title: 'Road Safety Module',
+      headerImage: require('../../../assets/images/app-images/illustration_2.png'),
+      videoUrl: 'https://www.youtube.com/embed/K8aBf9hG2oA',
+      topics: [
+        'Introduction to Road Safety',
+        'Safe Driving Practices',
+        'Road Signs and Rules',
+        'Emergency Handling',
+      ],
+    },
+    "3": {
+      id: "3",
+      title: 'Heart Health Awareness',
+      headerImage: require('../../../assets/images/app-images/illustration_3.png'),
+      videoUrl: 'https://www.youtube.com/embed/Ym5FVLrG3jw',
+      topics: [
+        'Heart Anatomy Basics',
+        'Risk Factors for Heart Disease',
+        'Healthy Lifestyle Tips',
+        'Preventive Measures',
+      ],
+    },
+  };
+
+  const safeId = Array.isArray(id) ? id[0] : id;
+  const course = safeId ? courses[safeId] : undefined;
+
+  const [showVideo, setShowVideo] = useState(false);
+
+  if (!course) {
+    return (
+      <View style={styles.center}>
+        <Text>Course not found.</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Course Thumbnail */}
-      <Image
-        source={require('../../../assets/images/app-images/illustration_1.png')}
-        style={styles.thumbnail}
-      />
+    <ScrollView style={styles.scroll}>
+      {/* Header Image */}
+      <View style={styles.headerContainer}>
+        <Image
+          source={course.headerImage}
+          style={styles.headerImage}
+          resizeMode="cover"
+        />
 
-      {/* Title & Subtitle */}
-      <View style={styles.content}>
-        <Text style={styles.title}>{course.title}</Text>
-        <Text style={styles.subtitle}>{course.subtitle}</Text>
+        {/* Curved white overlay */}
+        <View style={styles.overlayPanel}>
+          <Text style={styles.courseTitle}>
+            {course.title}
+          </Text>
 
-        {/* Rating & Reviews */}
-        <View style={styles.row}>
-          <Text style={styles.rating}>
-            ⭐ {course.rating} ({course.reviewsCount} ratings)
-          </Text>
-          <Text style={styles.students}>
-            • {course.students} students
-          </Text>
+          {/* Topics list */}
+          {course.topics.map((topic, index) => (
+            <View key={index}>
+              <TouchableOpacity
+                style={styles.topicRow}
+                onPress={() => {
+                  if (index === 0) {
+                    setShowVideo(!showVideo);
+                  } else {
+                    console.log(`Clicked topic ${index + 1}: ${topic}`);
+                  }
+                }}
+              >
+                <Text style={styles.topicNumber}>
+                  {String(index + 1).padStart(2, '0')}
+                </Text>
+                <Text style={styles.topicText}>{topic}</Text>
+
+                {/* Play button */}
+                <View style={styles.playButton}>
+                  <Ionicons name="play" size={18} color="#fff" />
+                </View>
+              </TouchableOpacity>
+
+              {/* Show video after first topic */}
+              {index === 0 && showVideo && (
+                <View style={styles.videoContainer}>
+                  <WebView
+                    source={{ uri: course.videoUrl }}
+                    style={styles.video}
+                  />
+                </View>
+              )}
+            </View>
+          ))}
+
+          {/* QUIZ BUTTON */}
+          <TouchableOpacity
+            style={styles.quizButton}
+            onPress={() => router.push(`/course/quiz/${course.id}`)}
+          >
+            <Text style={styles.quizButtonText}>Start Quiz</Text>
+          </TouchableOpacity>
         </View>
-
-
-        {/* What you'll learn */}
-        <Text style={styles.sectionTitle}>What you'll learn</Text>
-        {course.whatYouWillLearn.map((item, index) => (
-          <Text key={index} style={styles.bullet}>
-            • {item}
-          </Text>
-        ))}
-
-        {/* Course Content */}
-        <Text style={styles.sectionTitle}>Course Content</Text>
-        {course.sections.map((section, idx) => (
-          <View key={idx} style={styles.sectionBlock}>
-            <Text style={styles.sectionHeader}>{section.title}</Text>
-            {section.lectures.map((lecture, index) => (
-              <Text key={index} style={styles.lecture}>
-                - {lecture}
-              </Text>
-            ))}
-          </View>
-        ))}
-
-        {/* Includes */}
-        <Text style={styles.sectionTitle}>This course includes:</Text>
-        {course.courseIncludes.map((item, index) => (
-          <Text key={index} style={styles.bullet}>
-            • {item}
-          </Text>
-        ))}
-
-        {/* Requirements */}
-        <Text style={styles.sectionTitle}>Requirements</Text>
-        {course.requirements.map((item, index) => (
-          <Text key={index} style={styles.bullet}>
-            • {item}
-          </Text>
-        ))}
-
-        {/* Description */}
-        <Text style={styles.sectionTitle}>Description</Text>
-        <Text style={styles.description}>{course.description}</Text>
-        <Link href="/course/quiz" style={styles.buyButton}>
-          <Text style={styles.buyButtonText}>Start Quiz</Text>
-          </Link>
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  thumbnail: { width: '100%', height: 200 },
-  content: { padding: 20 },
-  title: { color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 8 },
-  subtitle: { color: '#ccc', fontSize: 16, marginBottom: 10 },
-  row: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  rating: { color: '#ffd700', fontSize: 14, marginRight: 10 },
-  students: { color: '#999', fontSize: 14 },
-  price: { color: '#fff', fontSize: 20, fontWeight: 'bold', marginVertical: 10 },
-  buyButton: {
-    backgroundColor: '#A020F0',
-    paddingVertical: 10,
-    borderRadius: 5,
+  scroll: {
+    backgroundColor: '#fff',
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerContainer: {
+    position: 'relative',
+    backgroundColor: '#fff',
+  },
+  headerImage: {
+    width: width,
+    height: 220,
+  },
+  overlayPanel: {
+    backgroundColor: '#fff',
+    marginTop: -40,
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    paddingHorizontal: 20,
+    paddingTop: 30,
+    paddingBottom: 50,
+  },
+  courseTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0D0D26',
     marginBottom: 20,
   },
-  buyButtonText: { color: '#fff', textAlign: 'center', fontSize: 16, fontWeight: 'bold' },
-  sectionTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginTop: 20, marginBottom: 10 },
-  bullet: { color: '#ccc', fontSize: 14, marginBottom: 5 },
-  sectionBlock: { marginBottom: 15 },
-  sectionHeader: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
-  lecture: { color: '#ccc', fontSize: 14, marginLeft: 10 },
-  description: { color: '#ccc', fontSize: 14, marginTop: 5 },
-  instructor: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
-  instructorImage: { width: 60, height: 60, borderRadius: 30 },
-  instructorName: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  instructorBio: { color: '#ccc', fontSize: 14 },
+  topicRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  topicNumber: {
+    color: '#A0A0B2',
+    fontWeight: 'bold',
+    width: 30,
+    fontSize: 16,
+  },
+  topicText: {
+    flex: 1,
+    color: '#0D0D26',
+    fontSize: 14,
+  },
+  playButton: {
+    backgroundColor: '#3D5CFF',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  videoContainer: {
+    marginTop: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    height: 200,
+  },
+  video: {
+    width: '100%',
+    height: '100%',
+  },
+  quizButton: {
+    marginTop: 30,
+    backgroundColor: '#3D5CFF',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  quizButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

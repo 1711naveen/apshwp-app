@@ -1,5 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from 'jwt-decode';
+
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -20,10 +22,13 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
+      console.log('Attempting login with:', { login: email, password: password });
+      
       const response = await fetch('https://apshwp.ap.gov.in/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           login: email,
@@ -31,23 +36,43 @@ export default function LoginScreen() {
         }),
       });
 
-      const data = await response.json();
-      console.log('Login API response:', data);
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-      if (!data.status) {
-        Alert.alert('Login Failed', data.message || 'Something went wrong.');
+      const data = await response.json();
+
+      // Check if login was successful
+      if (!data.token) {
+        Alert.alert('Login Failed', data.message || 'Invalid credentials. Please check your login details.');
         return;
       }
 
-      // Save user data
-      await AsyncStorage.setItem('user', JSON.stringify(data.data));
+      try {
+        // Decode the JWT token
+        const decoded = jwtDecode(data.token);
 
-      Alert.alert('Success', `Welcome, ${data.data.name}!`);
+        // Save token and decoded data to AsyncStorage
+        await AsyncStorage.setItem('authToken', data.token);
+        await AsyncStorage.setItem('userInfo', JSON.stringify(decoded));
 
-      router.replace('/(tabs)/home');
+        Alert.alert('Login Success', `Welcome ${decoded.name || decoded.username || 'User'}!`);
+
+        // Navigate to home screen
+        router.replace('/(tabs)/home');
+      } catch (decodeError) {
+        console.error('Token decode error:', decodeError);
+        Alert.alert('Error', 'Invalid token received from server.');
+      }
     } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
+      console.error('Login error:', error);
+      if (error.message.includes('Network request failed')) {
+        Alert.alert('Network Error', 'Please check your internet connection and try again.');
+      } else {
+        Alert.alert('Error', 'Something went wrong. Please try again.');
+      }
     }
   };
 
@@ -58,13 +83,13 @@ export default function LoginScreen() {
       </View>
 
       <View style={styles.formBox}>
-        <Text style={styles.label}>Your Email</Text>
+        <Text style={styles.label}>Phone Number / Email</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter email"
+          placeholder="Enter phone number or email"
           value={email}
           onChangeText={setEmail}
-          keyboardType="email-address"
+          keyboardType="default"
           autoCapitalize="none"
         />
 
@@ -107,38 +132,6 @@ export default function LoginScreen() {
             Sign up
           </Link>
         </Text>
-
-        {/* <View style={styles.orContainer}>
-          <View style={styles.line} />
-          <Text style={styles.orText}>Or login with</Text>
-          <View style={styles.line} />
-        </View> */}
-
-        {/* <View style={styles.socialContainer}>
-          <Pressable
-            style={styles.socialButton}
-            onPress={() => Alert.alert('Google login pressed')}
-          >
-            <Image
-              source={{
-                uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png',
-              }}
-              style={styles.socialIcon}
-            />
-          </Pressable>
-
-          <Pressable
-            style={styles.socialButton}
-            onPress={() => Alert.alert('Facebook login pressed')}
-          >
-            <Image
-              source={{
-                uri: 'https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png',
-              }}
-              style={styles.socialIcon}
-            />
-          </Pressable>
-        </View> */}
       </View>
     </View>
   );
@@ -217,36 +210,5 @@ const styles = StyleSheet.create({
   signupLink: {
     color: '#3D5CFF',
     fontWeight: 'bold',
-  },
-  orContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-  },
-  line: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E5E5E5',
-  },
-  orText: {
-    marginHorizontal: 10,
-    color: '#A0A0B2',
-    fontSize: 12,
-  },
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 20,
-  },
-  socialButton: {
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    borderRadius: 8,
-  },
-  socialIcon: {
-    width: 32,
-    height: 32,
-    resizeMode: 'contain',
   },
 });

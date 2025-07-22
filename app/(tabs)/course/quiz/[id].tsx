@@ -1,63 +1,152 @@
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
+import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function QuizDetailScreen() {
   const router = useRouter();
+  const { id } = useLocalSearchParams();
 
+  // Example bank of questions
+  const questionBank = [
+    {
+      text: 'What does HIV stand for?',
+      options: [
+        'Human Infection Virus',
+        'Human Immunodeficiency Virus',
+        'Human Immune Virus',
+        'Human Injecting Virus',
+      ],
+      answerIndex: 1,
+    },
+    {
+      text: 'Which organ does HIV mainly attack?',
+      options: ['Liver', 'Brain', 'Immune System', 'Kidneys'],
+      answerIndex: 2,
+    },
+    {
+      text: 'What does NCD stand for?',
+      options: ['Non-Communicable Disease', 'New Chronic Disease', 'Nerve Cell Disorder', 'None'],
+      answerIndex: 0,
+    },
+    {
+      text: 'Which is NOT an NCD?',
+      options: ['Diabetes', 'Hypertension', 'Tuberculosis', 'Cancer'],
+      answerIndex: 2,
+    },
+    {
+      text: 'Which practice helps road safety?',
+      options: ['Overspeeding', 'Drunk driving', 'Wearing seatbelts', 'Using phones while driving'],
+      answerIndex: 2,
+    },
+    {
+      text: 'Substance abuse can cause?',
+      options: ['Good health', 'Improved memory', 'Mental disorders', 'Better sleep'],
+      answerIndex: 2,
+    },
+    {
+      text: 'Healthy weight reduces risk of?',
+      options: ['NCDs', 'Air pollution', 'Accidents', 'Allergies'],
+      answerIndex: 0,
+    },
+    {
+      text: 'Child rights include?',
+      options: ['Education', 'Nutrition', 'Safety', 'All of these'],
+      answerIndex: 3,
+    },
+    {
+      text: 'Mental health includes?',
+      options: ['Emotional wellbeing', 'Physical pain only', 'None', 'Smoking'],
+      answerIndex: 0,
+    },
+    {
+      text: 'Which is a healthy habit?',
+      options: ['Skipping meals', 'Exercising regularly', 'Smoking', 'Drinking alcohol'],
+      answerIndex: 1,
+    },
+  ];
+
+  // ✅ Shuffle ONCE using useMemo
+  const shuffledQuestions = useMemo(() => {
+    return [...questionBank].sort(() => 0.5 - Math.random()).slice(0, 10);
+  }, []);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [score, setScore] = useState(0);
+  const [userAnswers, setUserAnswers] = useState<(number | null)[]>(new Array(10).fill(null));
 
-  const question = {
-    number: 1,
-    total: 30,
-    text: 'What does HIV stand for?',
-    options: [
-      'Human Infection Virus',
-      'Human Immunodeficiency Virus',
-      'Human Immune Virus',
-      'Human Injecting Virus',
-    ],
+  // Disable back button/gesture
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      // Return true to prevent default back action
+      return true;
+    });
+
+    return () => backHandler.remove();
+  }, []);
+
+  const currentQuestion = shuffledQuestions[currentIndex];
+
+  // Load the saved answer for current question
+  useState(() => {
+    setSelectedIndex(userAnswers[currentIndex]);
+  });
+
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      // Save current answer before going back
+      const newAnswers = [...userAnswers];
+      newAnswers[currentIndex] = selectedIndex;
+      setUserAnswers(newAnswers);
+      
+      setCurrentIndex(currentIndex - 1);
+      setSelectedIndex(userAnswers[currentIndex - 1]);
+    }
+  };
+
+  const handleNext = () => {
+    // Save current answer
+    const newAnswers = [...userAnswers];
+    newAnswers[currentIndex] = selectedIndex;
+    setUserAnswers(newAnswers);
+
+    if (currentIndex < shuffledQuestions.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setSelectedIndex(newAnswers[currentIndex + 1]);
+    } else {
+      // Calculate final score
+      let finalScore = 0;
+      shuffledQuestions.forEach((question, index) => {
+        if (newAnswers[index] === question.answerIndex) {
+          finalScore++;
+        }
+      });
+      
+      // Navigate to result page
+      router.push({
+        pathname: '/course/quiz/result',
+        params: {
+          score: `${finalScore}`,
+          total: '10',
+        },
+      });
+    }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
+      <Text style={styles.headerTitle}>Quiz on {id}</Text>
 
-        <View style={styles.headerTitleBlock}>
-          <Text style={styles.headerTitle}>
-            Quiz on HIV/ AIDS Prevention
-          </Text>
-          <Text style={styles.questionCount}>
-            {question.total} Question
-          </Text>
-        </View>
-
-        <TouchableOpacity>
-          <Text style={styles.quitText}>Quit</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Quiz Card */}
       <View style={styles.card}>
         <Text style={styles.questionNumber}>
-          Question: {question.number}/{question.total}
+          Question: {currentIndex + 1}/10
         </Text>
 
         <Text style={styles.questionText}>
-          {question.text}
+          {currentQuestion.text}
         </Text>
 
-        {question.options.map((opt, index) => (
+        {currentQuestion.options.map((opt, index) => (
           <TouchableOpacity
             key={index}
             onPress={() => setSelectedIndex(index)}
@@ -77,19 +166,31 @@ export default function QuizDetailScreen() {
           </TouchableOpacity>
         ))}
 
-        <TouchableOpacity>
-          <Text style={styles.seeResult}>See Result ↓</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={[
+              styles.prevButton,
+              currentIndex === 0 && { backgroundColor: '#ccc' },
+            ]}
+            onPress={handlePrevious}
+            disabled={currentIndex === 0}
+          >
+            <Text style={styles.buttonText}>Previous</Text>
+          </TouchableOpacity>
 
-      {/* Buttons */}
-      <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.prevButton}>
-          <Text style={styles.buttonText}>Previous</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.nextButton}>
-          <Text style={styles.buttonText}>Next</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.nextButton,
+              selectedIndex === null && { backgroundColor: '#ccc' },
+            ]}
+            onPress={handleNext}
+            disabled={selectedIndex === null}
+          >
+            <Text style={styles.buttonText}>
+              {currentIndex === shuffledQuestions.length - 1 ? 'See Result' : 'Next'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ScrollView>
   );
@@ -101,32 +202,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     flexGrow: 1,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  backIcon: {
-    fontSize: 24,
-    color: '#1E1E1E',
-  },
-  headerTitleBlock: {
-    alignItems: 'center',
-  },
   headerTitle: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#1E1E1E',
-  },
-  questionCount: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 2,
-  },
-  quitText: {
-    color: '#FF3D71',
-    fontWeight: 'bold',
+    color: '#0D0D26',
+    marginBottom: 20,
   },
   card: {
     backgroundColor: '#fff',
@@ -137,7 +217,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 3 },
-    marginBottom: 30,
   },
   questionNumber: {
     fontSize: 12,
@@ -172,30 +251,25 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  seeResult: {
-    color: '#3D5CFF',
-    fontWeight: 'bold',
-    textAlign: 'right',
-    marginTop: 10,
-    fontSize: 12,
-  },
-  buttonRow: {
+  buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 12,
   },
   prevButton: {
-    backgroundColor: '#3D5CFF',
-    flex: 1,
-    marginRight: 10,
-    paddingVertical: 12,
+    backgroundColor: '#6C757D',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
     borderRadius: 8,
+    flex: 1,
   },
   nextButton: {
     backgroundColor: '#3D5CFF',
-    flex: 1,
-    marginLeft: 10,
-    paddingVertical: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
     borderRadius: 8,
+    flex: 1,
   },
   buttonText: {
     color: '#fff',

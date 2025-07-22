@@ -1,23 +1,16 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
-import QuizBanner from '../../../components/QuizBanner';
-import SearchBox from '../../../components/SearchBox';
-import CategoryCard from '../../../components/CategoryCard';
-import RecentActivityCard from '../../../components/RecentActivityCard';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function QuizHome() {
-  const categories = [
-    { title: 'HIV/ AIDS Prevention', img: require('../../../../assets/images/app-images/illustration_1.png'), active: true },
-    { title: 'Substance Abuse', img: require('../../../../assets/images/app-images/illustration_2.png') },
-    { title: 'Mental Health', img: require('../../../../assets/images/app-images/illustration_3.png') },
-    { title: 'NCDs', img: require('../../../../assets/images/app-images/illustration_1.png') },
-    { title: 'Child Rights', img: require('../../../../assets/images/app-images/illustration_2.png') },
-  ];
+  const router = useRouter();
 
-  const activities = [
-    { title: 'HIV/ AIDS Prevention', questionCount: '30 Question', score: '26/30', scoreColor: '#FF3D71' },
-    { title: 'HIV/ AIDS Prevention', questionCount: '30 Question', score: '20/30', scoreColor: '#F5C118' },
-    { title: 'HIV/ AIDS Prevention', questionCount: '30 Question', score: '25/30', scoreColor: '#3D5CFF' },
+  const categories = [
+    { id: 'hiv', title: 'HIV/ AIDS Prevention', img: require('../../../../assets/images/app-images/illustration_1.png'), active: true },
+    { id: 'substance', title: 'Substance Abuse', img: require('../../../../assets/images/app-images/illustration_2.png') },
+    { id: 'mental', title: 'Mental Health', img: require('../../../../assets/images/app-images/illustration_3.png') },
+    { id: 'ncds', title: 'NCDs', img: require('../../../../assets/images/app-images/illustration_1.png') },
+    { id: 'childrights', title: 'Child Rights', img: require('../../../../assets/images/app-images/illustration_2.png') },
   ];
 
   return (
@@ -30,32 +23,19 @@ export default function QuizHome() {
         />
       </View>
 
-      <QuizBanner />
-
-      <SearchBox />
-
       <Text style={styles.sectionTitle}>Categories</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categories}>
         {categories.map((cat, index) => (
-          <CategoryCard
+          <TouchableOpacity
             key={index}
-            title={cat.title}
-            image={cat.img}
-            isActive={cat.active}
-          />
+            onPress={() => router.push(`/course/quiz/${cat.id}`)}
+            style={styles.card}
+          >
+            <Image source={cat.img} style={styles.cardImage} />
+            <Text style={styles.cardTitle}>{cat.title}</Text>
+          </TouchableOpacity>
         ))}
       </ScrollView>
-
-      <Text style={styles.sectionTitle}>Recent Activity</Text>
-      {activities.map((act, index) => (
-        <RecentActivityCard
-          key={index}
-          title={act.title}
-          questionCount={act.questionCount}
-          score={act.score}
-          scoreColor={act.scoreColor}
-        />
-      ))}
     </ScrollView>
   );
 }
@@ -76,4 +56,21 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   categories: { marginBottom: 20 },
+  card: {
+    marginRight: 12,
+    alignItems: 'center',
+    width: 120,
+  },
+  cardImage: {
+    width: 120,
+    height: 80,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  cardTitle: {
+    fontSize: 12,
+    textAlign: 'center',
+    color: '#1E1E1E',
+    fontWeight: 'bold',
+  },
 });
