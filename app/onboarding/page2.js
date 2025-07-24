@@ -11,14 +11,18 @@ export default function Page2() {
 
       {/* Illustration */}
       <Image
-        source={require('../../assets/images/app-images/illustration_2.png')}
+        source={require('../../assets/images/app-images/referral.png')}
         style={styles.illustration}
       />
 
-      {/* Text Content */}
-      <Text style={styles.title}>Quick and easy learning</Text>
+      {/* Title */}
+      <Text style={styles.title}>Referral</Text>
+
+      {/* Subtitle */}
       <Text style={styles.subtitle}>
-        Easy and fast learning at any time to help you improve various skills
+        Invite your friends using your{'\n'}
+        referral code – get 5 points for{'\n'}
+        every friend who joins!
       </Text>
 
       {/* Pagination Dots */}
@@ -51,8 +55,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   illustration: {
-    width: width * 0.7,
-    height: width * 0.7,
+    width: width * 0.75,
+    height: width * 0.75,
     resizeMode: 'contain',
     marginTop: 60,
     marginBottom: 40,
@@ -68,7 +72,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#A0A0B2',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
   },
   dotsContainer: {
     flexDirection: 'row',

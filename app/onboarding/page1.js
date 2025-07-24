@@ -10,14 +10,18 @@ export default function Page1() {
 
       {/* Illustration */}
       <Image
-        source={require('../../assets/images/app-images/illustration_1.png')}
+        source={require('../../assets/images/app-images/e-learning.png')}
         style={styles.illustration}
       />
 
-      {/* Text Content */}
-      <Text style={styles.title}>Numerous free trial courses</Text>
+      {/* Heading */}
+      <Text style={styles.title}>E-Learning</Text>
+
+      {/* Subtitle */}
       <Text style={styles.subtitle}>
-        Free courses for you to find your way to learning
+        Explore Our Newly Launched{'\n'}
+        E-Learning Zone And Get Certified{'\n'}
+        Today In Various Modules
       </Text>
 
       {/* Pagination Dots */}
@@ -50,8 +54,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   illustration: {
-    width: width * 0.7,
-    height: width * 0.7,
+    width: width * 0.75,
+    height: width * 0.75,
     resizeMode: 'contain',
     marginTop: 60,
     marginBottom: 40,
@@ -67,7 +71,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#A0A0B2',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
   },
   dotsContainer: {
     flexDirection: 'row',

@@ -1,27 +1,25 @@
-import { router } from 'expo-router';
 import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Page3() {
-  const handleSignUp = () => {
-    router.replace('/auth/signup');
-  };
-
-  const handleLogin = () => {
-    router.replace('/auth/login');
-  };
-
   return (
     <View style={styles.container}>
+      {/* Skip Button */}
+      <TouchableOpacity style={styles.skipButton} onPress={() => {}}>
+        <Text style={styles.skipText}>Skip</Text>
+      </TouchableOpacity>
+
       {/* Illustration */}
       <Image
-        source={require('../../assets/images/app-images/illustration_3.png')}
+        source={require('../../assets/images/app-images/quiz.png')}
         style={styles.illustration}
       />
 
-      {/* Text Content */}
-      <Text style={styles.title}>Create your own study plan</Text>
+      {/* Title */}
+      <Text style={styles.title}>Quiz</Text>
+
+      {/* Subtitle */}
       <Text style={styles.subtitle}>
-        Study according to the study plan, make study more motivated
+        Watch videos, take quizzes,{'\n'}and earn 7 points!
       </Text>
 
       {/* Pagination Dots */}
@@ -29,17 +27,6 @@ export default function Page3() {
         <View style={styles.dot} />
         <View style={styles.dot} />
         <View style={styles.activeDot} />
-      </View>
-
-      {/* Buttons */}
-      <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
-          <Text style={styles.signUpText}>Sign up</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginText}>Log in</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -55,10 +42,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
   },
+  skipButton: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+  },
+  skipText: {
+    color: '#A0A0B2',
+    fontSize: 14,
+  },
   illustration: {
-    width: width * 0.7,
-    height: width * 0.7,
+    width: width * 0.75,
+    height: width * 0.75,
     resizeMode: 'contain',
+    marginTop: 60,
     marginBottom: 40,
   },
   title: {
@@ -72,12 +69,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#A0A0B2',
     textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 40,
+    lineHeight: 22,
   },
   dotsContainer: {
     flexDirection: 'row',
-    marginBottom: 40,
+    marginTop: 40,
   },
   dot: {
     backgroundColor: 'rgba(61, 92, 255, 0.2)',
@@ -92,32 +88,5 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     marginHorizontal: 4,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  signUpButton: {
-    backgroundColor: '#3D5CFF',
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 8,
-  },
-  signUpText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  loginButton: {
-    borderWidth: 1,
-    borderColor: '#3D5CFF',
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 8,
-  },
-  loginText: {
-    color: '#3D5CFF',
-    fontWeight: 'bold',
-    fontSize: 14,
   },
 });
