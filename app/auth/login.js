@@ -3,6 +3,7 @@ import { jwtDecode } from 'jwt-decode';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, useRouter } from 'expo-router';
+import * as Speech from 'expo-speech';
 import { useState } from 'react';
 import {
   Alert,
@@ -13,12 +14,29 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('8874752747');
   const [password, setPassword] = useState('Shivam@421');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  // Function to speak welcome message
+  const speakWelcomeMessage = (userName) => {
+    try {
+      const welcomeMessage = `Welcome ${userName}`;
+      Speech.speak(welcomeMessage, {
+        language: 'en-US',
+        pitch: 1.0,
+        rate: 0.8,
+        voice: undefined, // Will use default voice
+      });
+    } catch (speechError) {
+      console.log('Speech error:', speechError);
+      // Speech fails silently, won't affect login flow
+    }
+  };
 
   const handleLogin = async () => {
     try {
@@ -58,7 +76,13 @@ export default function LoginScreen() {
         await AsyncStorage.setItem('authToken', data.token);
         await AsyncStorage.setItem('userInfo', JSON.stringify(decoded));
 
-        Alert.alert('Login Success', `Welcome ${decoded.name || decoded.username || 'User'}!`);
+        // Get user's name for welcome message
+        const userName = decoded.name || decoded.username || 'User';
+        
+        // Speak welcome message
+        speakWelcomeMessage(userName);
+
+        Alert.alert('Login Success', `Welcome ${userName}!`);
 
         // Navigate to home screen
         router.replace('/(tabs)/home');
@@ -77,10 +101,11 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.topBox}>
-        <Text style={styles.title}>Log In</Text>
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.topBox}>
+          <Text style={styles.title}>Log In</Text>
+        </View>
 
       <View style={styles.formBox}>
         <Text style={styles.label}>Phone Number / Email</Text>
@@ -134,10 +159,15 @@ export default function LoginScreen() {
         </Text>
       </View>
     </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F2F2F5',
+  },
   container: {
     flex: 1,
     backgroundColor: '#F2F2F5',

@@ -1,6 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { router } from 'expo-router'; // ✅ import router
+import React from 'react';
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Page4() {
   const handleSignup = () => {
@@ -8,27 +9,33 @@ export default function Page4() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Heading */}
-      <Text style={styles.heading}>Calling All Adolescents and Youth!</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        {/* Heading */}
+        <Text style={styles.heading}>Calling All Adolescents and Youth!</Text>
 
-      {/* Full Process Image */}
-      <Image
-        source={require('../../assets/images/app-images/process.png')}
-        style={styles.processImage}
-      />
+        {/* Full Process Image */}
+        <Image
+          source={require('../../assets/images/app-images/process.png')}
+          style={styles.processImage}
+        />
 
-      {/* Sign Up Button */}
-      <TouchableOpacity style={styles.button} onPress={handleSignup}>
-        <Text style={styles.buttonText}>Sign up</Text>
-      </TouchableOpacity>
-    </View>
+        {/* Sign Up Button */}
+        <TouchableOpacity style={styles.button} onPress={handleSignup}>
+          <Text style={styles.buttonText}>Sign up</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',

@@ -4,8 +4,22 @@ export default function CourseLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: true,
+        headerShown: false,
       }}
-    />
+    >
+      <Stack.Screen 
+        name="index" 
+        options={{ 
+          headerShown: true,
+          title: 'Courses'
+        }} 
+      />
+      <Stack.Screen 
+        name="[id]" 
+        options={{ 
+          headerShown: false 
+        }} 
+      />
+    </Stack>
   );
 }

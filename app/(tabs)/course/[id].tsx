@@ -1,16 +1,16 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
+  Dimensions,
+  Image,
   ScrollView,
   StyleSheet,
+  Text,
   TouchableOpacity,
-  Image,
-  Dimensions,
+  View,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -79,9 +79,22 @@ export default function CourseDetail() {
   }
 
   return (
-    <ScrollView style={styles.scroll}>
-      {/* Header Image */}
-      <View style={styles.headerContainer}>
+    <View style={styles.container}>
+      {/* Custom Header */}
+      <View style={styles.customHeader}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#0D0D26" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Course Details</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <ScrollView style={styles.scroll}>
+        {/* Header Image */}
+        <View style={styles.headerContainer}>
         <Image
           source={course.headerImage}
           style={styles.headerImage}
@@ -140,10 +153,38 @@ export default function CourseDetail() {
         </View>
       </View>
     </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  customHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 50,
+    paddingBottom: 15,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  backButton: {
+    padding: 5,
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0D0D26',
+  },
+  headerSpacer: {
+    width: 34, // Same width as back button to center the title
+  },
   scroll: {
     backgroundColor: '#fff',
   },
