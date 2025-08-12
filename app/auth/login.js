@@ -1,7 +1,5 @@
-import { jwtDecode } from 'jwt-decode';
 
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { useState } from 'react';
@@ -41,7 +39,7 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     try {
       console.log('Attempting login with:', { login: email, password: password });
-      
+
       const response = await fetch('https://apshwp.ap.gov.in/api/login', {
         method: 'POST',
         headers: {
@@ -55,7 +53,7 @@ export default function LoginScreen() {
       });
 
       console.log('Response status:', response.status);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -70,15 +68,16 @@ export default function LoginScreen() {
 
       try {
         // Decode the JWT token
-        const decoded = jwtDecode(data.token);
+        // const decoded = jwtDecode(data.token);
 
-        // Save token and decoded data to AsyncStorage
-        await AsyncStorage.setItem('authToken', data.token);
-        await AsyncStorage.setItem('userInfo', JSON.stringify(decoded));
-
+        // // Save token and decoded data to AsyncStorage
+        // await AsyncStorage.setItem('authToken', data.token);
+        // await AsyncStorage.setItem('userInfo', JSON.stringify(decoded));
+      
         // Get user's name for welcome message
-        const userName = decoded.name || decoded.username || 'User';
-        
+        // const userName = decoded.name || decoded.username || 'User';
+        const userName = data.user.name;
+
         // Speak welcome message
         speakWelcomeMessage(userName);
 
@@ -107,58 +106,58 @@ export default function LoginScreen() {
           <Text style={styles.title}>Log In</Text>
         </View>
 
-      <View style={styles.formBox}>
-        <Text style={styles.label}>Phone Number / Email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter phone number or email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="default"
-          autoCapitalize="none"
-        />
-
-        <Text style={[styles.label, { marginTop: 20 }]}>Password</Text>
-        <View style={styles.passwordContainer}>
+        <View style={styles.formBox}>
+          <Text style={styles.label}>Phone Number / Email</Text>
           <TextInput
-            style={[styles.input, { flex: 1, marginBottom: 0 }]}
-            placeholder="Enter password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!isPasswordVisible}
+            style={styles.input}
+            placeholder="Enter phone number or email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="default"
+            autoCapitalize="none"
           />
-          <TouchableOpacity
-            onPress={() => setIsPasswordVisible(!isPasswordVisible)}
-            style={styles.eyeButton}
-          >
-            <Ionicons
-              name={isPasswordVisible ? 'eye-off' : 'eye'}
-              size={24}
-              color="#888"
+
+          <Text style={[styles.label, { marginTop: 20 }]}>Password</Text>
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={[styles.input, { flex: 1, marginBottom: 0 }]}
+              placeholder="Enter password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!isPasswordVisible}
             />
+            <TouchableOpacity
+              onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+              style={styles.eyeButton}
+            >
+              <Ionicons
+                name={isPasswordVisible ? 'eye-off' : 'eye'}
+                size={24}
+                color="#888"
+              />
+            </TouchableOpacity>
+          </View>
+
+          <Pressable onPress={() => Alert.alert('Forgot password pressed')}>
+            <Text style={styles.forgotPassword}>Forget password?</Text>
+          </Pressable>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleLogin}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>Log In</Text>
           </TouchableOpacity>
+
+          <Text style={styles.signupText}>
+            Don’t have an account?{' '}
+            <Link href="/auth/signup" style={styles.signupLink}>
+              Sign up
+            </Link>
+          </Text>
         </View>
-
-        <Pressable onPress={() => Alert.alert('Forgot password pressed')}>
-          <Text style={styles.forgotPassword}>Forget password?</Text>
-        </Pressable>
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleLogin}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonText}>Log In</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.signupText}>
-          Don’t have an account?{' '}
-          <Link href="/auth/signup" style={styles.signupLink}>
-            Sign up
-          </Link>
-        </Text>
       </View>
-    </View>
     </SafeAreaView>
   );
 }
