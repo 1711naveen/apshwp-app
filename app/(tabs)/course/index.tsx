@@ -1,61 +1,58 @@
-import React from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import React from 'react';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import CommonLayout from '../../components/CommonLayout';
 
 export default function CourseScreen() {
   const router = useRouter();
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>E-Modules</Text>
+    <CommonLayout title="E-Modules">
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <TouchableOpacity
+          onPress={() => router.push('/course/1')}
+          style={styles.card}
+        >
+          <Image
+            source={require('../../../assets/images/app-images/illustration_1.png')}
+            style={styles.image}
+          />
+          <Text style={styles.title}>
+            E-Module on Metabolic Health (NCDs Prevention)
+          </Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={() => router.push('/course/1')}
-        style={styles.card}
-      >
-        <Image
-          source={require('../../../assets/images/app-images/illustration_1.png')}
-          style={styles.image}
-        />
-        <Text style={styles.title}>
-          E-Module on Metabolic Health (NCDs Prevention)
-        </Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.push('/course/2')}
+          style={styles.card}
+        >
+          <Image
+            source={require('../../../assets/images/app-images/illustration_1.png')}
+            style={styles.image}
+          />
+          <Text style={styles.title}>Road Safety Module</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={() => router.push('/course/2')}
-        style={styles.card}
-      >
-        <Image
-          source={require('../../../assets/images/app-images/illustration_1.png')}
-          style={styles.image}
-        />
-        <Text style={styles.title}>Road Safety Module</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={() => router.push('/course/3')}
-        style={styles.card}
-      >
-        <Image
-          source={require('../../../assets/images/app-images/illustration_1.png')}
-          style={styles.image}
-        />
-        <Text style={styles.title}>Heart Health Awareness</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <TouchableOpacity
+          onPress={() => router.push('/course/3')}
+          style={styles.card}
+        >
+          <Image
+            source={require('../../../assets/images/app-images/illustration_1.png')}
+            style={styles.image}
+          />
+          <Text style={styles.title}>Heart Health Awareness</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </CommonLayout>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: '#fff',
     padding: 20,
-  },
-  header: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
   },
   card: {
     marginBottom: 24,

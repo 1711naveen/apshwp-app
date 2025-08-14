@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
+import CommonLayout from '../../components/CommonLayout';
 
 const { width } = Dimensions.get('window');
 
@@ -72,27 +73,17 @@ export default function CourseDetail() {
 
   if (!course) {
     return (
-      <View style={styles.center}>
-        <Text>Course not found.</Text>
-      </View>
+      <CommonLayout title="Course Not Found" showBackButton={true}>
+        <View style={styles.center}>
+          <Text>Course not found.</Text>
+        </View>
+      </CommonLayout>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {/* Custom Header */}
-      <View style={styles.customHeader}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#0D0D26" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Course Details</Text>
-        <View style={styles.headerSpacer} />
-      </View>
-
-      <ScrollView style={styles.scroll}>
+    <CommonLayout title={course.title} showBackButton={true}>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* Header Image */}
         <View style={styles.headerContainer}>
         <Image
@@ -152,40 +143,14 @@ export default function CourseDetail() {
           </TouchableOpacity>
         </View>
       </View>
-    </ScrollView>
-    </View>
+      </ScrollView>
+    </CommonLayout>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  customHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  backButton: {
-    padding: 5,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0D0D26',
-  },
-  headerSpacer: {
-    width: 34, // Same width as back button to center the title
-  },
-  scroll: {
     backgroundColor: '#fff',
   },
   center: {

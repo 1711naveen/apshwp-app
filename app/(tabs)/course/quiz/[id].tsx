@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import CommonLayout from '../../../components/CommonLayout';
 
 export default function QuizDetailScreen() {
   const router = useRouter();
@@ -134,8 +135,8 @@ export default function QuizDetailScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.headerTitle}>Quiz on {id}</Text>
+    <CommonLayout title={`Quiz on ${id}`}>
+      <ScrollView contentContainerStyle={styles.container}>
 
       <View style={styles.card}>
         <Text style={styles.questionNumber}>
@@ -193,6 +194,7 @@ export default function QuizDetailScreen() {
         </View>
       </View>
     </ScrollView>
+    </CommonLayout>
   );
 }
 

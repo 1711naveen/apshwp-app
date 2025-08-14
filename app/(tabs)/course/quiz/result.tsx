@@ -1,32 +1,35 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import CommonLayout from '../../../components/CommonLayout';
 
 export default function QuizResult() {
   const router = useRouter();
   const { score, total } = useLocalSearchParams();
 
   return (
-    <View style={styles.container}>
-      <View style={styles.circle}>
-        <Text style={styles.scoreLabel}>Your Score</Text>
-        <Text style={styles.scoreValue}>{score}/{total}</Text>
+    <CommonLayout title="Quiz Result">
+      <View style={styles.container}>
+        <View style={styles.circle}>
+          <Text style={styles.scoreLabel}>Your Score</Text>
+          <Text style={styles.scoreValue}>{score}/{total}</Text>
+        </View>
+
+        <Text style={styles.congrats}>Congratulation</Text>
+        <Text style={styles.subtext}>Great job, Student Name! You Did It</Text>
+
+        <TouchableOpacity style={styles.button}>
+          <Text style={styles.buttonText}>Share</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push('/course')}
+        >
+          <Text style={styles.buttonText}>Back to Home</Text>
+        </TouchableOpacity>
       </View>
-
-      <Text style={styles.congrats}>Congratulation</Text>
-      <Text style={styles.subtext}>Great job, Student Name! You Did It</Text>
-
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Share</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push('/course')}
-      >
-        <Text style={styles.buttonText}>Back to Home</Text>
-      </TouchableOpacity>
-    </View>
+    </CommonLayout>
   );
 }
 

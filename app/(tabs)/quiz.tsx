@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import CommonLayout from '../components/CommonLayout';
 import QuizDetail from '../components/QuizDetail';
 
 interface Choice {
@@ -100,19 +101,11 @@ export default function QuizScreen() {
   };
 
   return (
-    <>
+    <CommonLayout title="Quiz">
       <ScrollView style={styles.container}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
-        <View style={styles.headerRow}>
-          <Text style={styles.title}>Quiz</Text>
-          <Image
-            source={{ uri: 'https://i.pravatar.cc/100?img=64' }}
-            style={styles.profile}
-          />
-        </View>
-
         <View style={styles.banner}>
           <Text style={styles.bannerTitle}>Test Your Knowledge with Quizzes</Text>
           <Text style={styles.bannerSubtitle}>
@@ -212,6 +205,7 @@ export default function QuizScreen() {
         )}
 
       </ScrollView>
+      
       {/* Quiz Detail Modal */}
       <Modal
         visible={selectedQuiz !== null}
@@ -226,7 +220,7 @@ export default function QuizScreen() {
           />
         )}
       </Modal>
-    </>
+    </CommonLayout>
   );
 }
 
@@ -235,23 +229,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 50,
     paddingHorizontal: 16,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#0D0D26',
-  },
-  profile: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
   },
   banner: {
     backgroundColor: '#001F6D',

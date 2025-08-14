@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useState } from "react";
 import { Dimensions, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import HomeLayout from "../components/HomeLayout";
 
 const { width } = Dimensions.get("window");
 
@@ -81,7 +82,8 @@ function Home() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <HomeLayout>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -258,17 +260,17 @@ function Home() {
       </Modal>
 
     </ScrollView>
+    </HomeLayout>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F2F2F5",
     paddingHorizontal: 20,
   },
   header: {
-    marginTop: 40,
+    marginTop: 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
