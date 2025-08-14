@@ -1,18 +1,17 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import {
+    Dimensions,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 export default function SuccessScreen() {
   const handleDone = () => {
-    // Example: Go back to home or login screen
-    router.replace('/');
+    // Navigate to login screen after successful registration
+    router.replace('/auth/login');
   };
 
   return (
