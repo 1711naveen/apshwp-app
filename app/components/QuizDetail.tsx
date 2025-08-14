@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState } from 'react';
 import {
+    Alert,
     SafeAreaView,
     ScrollView,
     StyleSheet,
@@ -30,6 +32,7 @@ interface Quiz {
     quize_image: string;
     description: string;
     status: string;
+    theme_id?: number;
     questions: Question[];
 }
 
@@ -43,6 +46,7 @@ export default function QuizDetail({ quiz, onClose, onComplete }: QuizDetailProp
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
     const [showResults, setShowResults] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const currentQuestion = quiz.questions[currentQuestionIndex];
 
@@ -53,7 +57,81 @@ export default function QuizDetail({ quiz, onClose, onComplete }: QuizDetailProp
         });
     };
 
-    const handleNext = () => {
+    const saveQuizResponse = async (questionId: number, responseId: number) => {
+        try {
+            // Get user info from AsyncStorage
+            const storedUser = await AsyncStorage.getItem('userInfo');
+            if (!storedUser) {
+                Alert.alert('Error', 'User not found. Please login again.');
+                return false;
+            }
+
+            const user = JSON.parse(storedUser);
+            const userId = user.id;
+
+            // Prepare the response body
+            const responseBody = {
+                user_id: userId,
+                quiz_id: quiz.id,
+                theme_id: quiz.theme_id || 9, // Use quiz theme_id or default to 9
+                quiz_status: "IN_PROGRESS",
+                start_date: new Date().toISOString().split('T')[0],
+                end_date: null,
+                responses: [
+                    {
+                        question_id: questionId,
+                        response_id: responseId
+                    }
+                ]
+            };
+
+            console.log('Saving quiz response:', responseBody);
+
+            const response = await fetch('https://apshwp.ap.gov.in/api/quizzes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(responseBody)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.text();
+                console.error('API Error Response:', errorData);
+                throw new Error(`API Error: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Quiz response saved successfully:', result);
+            return true;
+
+        } catch (error) {
+            console.error('Error saving quiz response:', error);
+            Alert.alert('Error', 'Failed to save your answer. Please try again.');
+            return false;
+        }
+    };
+
+    const handleNext = async () => {
+        const selectedAnswer = selectedAnswers[currentQuestion.id];
+        if (!selectedAnswer) {
+            Alert.alert('Please select an answer', 'You must select an answer before proceeding.');
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        // Save the current answer to API
+        const success = await saveQuizResponse(currentQuestion.id, selectedAnswer);
+        
+        setIsSubmitting(false);
+
+        if (!success) {
+            // If saving failed, don't proceed to next question
+            return;
+        }
+
+        // Proceed to next question or finish quiz
         if (currentQuestionIndex < quiz.questions.length - 1) {
             setCurrentQuestionIndex(currentQuestionIndex + 1);
         } else {
@@ -67,7 +145,58 @@ export default function QuizDetail({ quiz, onClose, onComplete }: QuizDetailProp
         }
     };
 
-    const finishQuiz = () => {
+    const finishQuiz = async () => {
+        try {
+            // Get user info from AsyncStorage
+            const storedUser = await AsyncStorage.getItem('userInfo');
+            if (!storedUser) {
+                Alert.alert('Error', 'User not found. Please login again.');
+                return;
+            }
+
+            const user = JSON.parse(storedUser);
+            const userId = user.id;
+
+            // Prepare all responses for final submission
+            const allResponses = Object.entries(selectedAnswers).map(([questionId, responseId]) => ({
+                question_id: parseInt(questionId),
+                response_id: responseId
+            }));
+
+            const responseBody = {
+                user_id: userId,
+                quiz_id: quiz.id,
+                theme_id: quiz.theme_id || 9,
+                quiz_status: "COMPLETED",
+                start_date: new Date().toISOString().split('T')[0],
+                end_date: new Date().toISOString().split('T')[0],
+                responses: allResponses
+            };
+
+            console.log('Finishing quiz with final submission:', responseBody);
+
+            const response = await fetch('https://apshwp.ap.gov.in/api/quizzes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(responseBody)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.text();
+                console.error('Final API Error Response:', errorData);
+                throw new Error(`API Error: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Quiz completed successfully:', result);
+
+        } catch (error) {
+            console.error('Error completing quiz:', error);
+            Alert.alert('Warning', 'Quiz completed locally but failed to sync with server.');
+        }
+
         const score = calculateScore();
         setShowResults(true);
         onComplete(score, quiz.questions.length);
@@ -240,23 +369,28 @@ export default function QuizDetail({ quiz, onClose, onComplete }: QuizDetailProp
                     style={[
                         styles.navButton,
                         styles.nextButton,
-                        !selectedAnswers[currentQuestion.id] && styles.navButtonDisabled
+                        (!selectedAnswers[currentQuestion.id] || isSubmitting) && styles.navButtonDisabled
                     ]}
                     onPress={handleNext}
-                    disabled={!selectedAnswers[currentQuestion.id]}
+                    disabled={!selectedAnswers[currentQuestion.id] || isSubmitting}
                 >
                     <Text style={[
                         styles.navButtonText,
                         styles.nextButtonText,
-                        !selectedAnswers[currentQuestion.id] && styles.navButtonTextDisabled
+                        (!selectedAnswers[currentQuestion.id] || isSubmitting) && styles.navButtonTextDisabled
                     ]}>
-                        {currentQuestionIndex === quiz.questions.length - 1 ? 'Finish' : 'Next'}
+                        {isSubmitting 
+                            ? 'Saving...' 
+                            : currentQuestionIndex === quiz.questions.length - 1 ? 'Finish' : 'Next'
+                        }
                     </Text>
-                    <Ionicons
-                        name={currentQuestionIndex === quiz.questions.length - 1 ? "checkmark" : "chevron-forward"}
-                        size={20}
-                        color={!selectedAnswers[currentQuestion.id] ? "#ccc" : "#fff"}
-                    />
+                    {!isSubmitting && (
+                        <Ionicons
+                            name={currentQuestionIndex === quiz.questions.length - 1 ? "checkmark" : "chevron-forward"}
+                            size={20}
+                            color={(!selectedAnswers[currentQuestion.id] || isSubmitting) ? "#ccc" : "#fff"}
+                        />
+                    )}
                 </TouchableOpacity>
             </View>
         </SafeAreaView>

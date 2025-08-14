@@ -1,5 +1,6 @@
 
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { useState } from 'react';
@@ -73,7 +74,7 @@ export default function LoginScreen() {
         // // Save token and decoded data to AsyncStorage
         // await AsyncStorage.setItem('authToken', data.token);
         // await AsyncStorage.setItem('userInfo', JSON.stringify(decoded));
-      
+        await AsyncStorage.setItem("userInfo", JSON.stringify(data.user));
         // Get user's name for welcome message
         // const userName = decoded.name || decoded.username || 'User';
         const userName = data.user.name;
@@ -137,11 +138,11 @@ export default function LoginScreen() {
               />
             </TouchableOpacity>
           </View>
-
+          
           <Pressable onPress={() => Alert.alert('Forgot password pressed')}>
             <Text style={styles.forgotPassword}>Forget password?</Text>
           </Pressable>
-
+{/* */}
           <TouchableOpacity
             style={styles.button}
             onPress={handleLogin}

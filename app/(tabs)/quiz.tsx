@@ -24,6 +24,7 @@ interface Quiz {
   quize_image: string;
   description: string;
   status: string;
+  theme_id?: number;
   questions: Question[];
 }
 
@@ -76,8 +77,7 @@ export default function QuizScreen() {
   }, []);
 
   const filteredQuizzes = quizzes.filter(quiz =>
-    quiz.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    quiz.description.toLowerCase().includes(searchQuery.toLowerCase())
+    quiz.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleQuizStart = (quiz: Quiz) => {
@@ -116,7 +116,7 @@ export default function QuizScreen() {
         <View style={styles.banner}>
           <Text style={styles.bannerTitle}>Test Your Knowledge with Quizzes</Text>
           <Text style={styles.bannerSubtitle}>
-            You’re just looking for a playful way to learn new facts.
+            You&amp;re just looking for a playful way to learn new facts.
           </Text>
           <TouchableOpacity style={styles.playButton}>
             <Text style={styles.playText}>Play Now</Text>
@@ -160,8 +160,12 @@ export default function QuizScreen() {
             </Text>
 
             {filteredQuizzes.map((quiz) => (
-              <TouchableOpacity key={quiz.id} style={styles.quizCard}>
-                <View style={styles.quizCardHeader}>
+              <TouchableOpacity
+                key={quiz.id}
+                style={styles.quizCard}
+                onPress={() => handleQuizStart(quiz)}
+              >
+                <View style={styles.quizCardContent}>
                   {quiz.quize_image ? (
                     <Image
                       source={{ uri: `https://apshwp.ap.gov.in/public/storage/${quiz.quize_image}` }}
@@ -178,18 +182,11 @@ export default function QuizScreen() {
                       {quiz.questions?.length || 0} Questions
                     </Text>
                     <Text style={styles.quizStatus}>Status: {quiz.status}</Text>
+
                   </View>
                 </View>
 
-
-
                 <View style={styles.quizFooter}>
-                  {/* <View style={styles.difficultyBadge}>
-                    <Text style={styles.difficultyText}>
-                      {quiz.questions?.length > 15 ? 'Advanced' :
-                        quiz.questions?.length > 8 ? 'Intermediate' : 'Beginner'}
-                    </Text>
-                  </View> */}
                   <TouchableOpacity
                     style={styles.startButton}
                     onPress={() => handleQuizStart(quiz)}
@@ -233,11 +230,6 @@ export default function QuizScreen() {
   );
 }
 
-const getScoreColor = (score: number) => {
-  if (score >= 25) return '#00BCD4';
-  if (score >= 20) return '#FFEB3B';
-  return '#F44336';
-};
 
 const styles = StyleSheet.create({
   container: {
@@ -353,20 +345,26 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
   },
+  quizCardContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
   quizCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
   quizImage: {
-    width: 70,
-    height: 70,
+    flex: 1,
+    height: 100,
+    width: 100,
     borderRadius: 8,
     marginRight: 12,
   },
   quizImagePlaceholder: {
-    width: 70,
-    height: 70,
+    flex: 1,
+    height: 100,
     borderRadius: 8,
     backgroundColor: '#F0F0F0',
     justifyContent: 'center',
@@ -390,17 +388,16 @@ const styles = StyleSheet.create({
   quizStatus: {
     fontSize: 12,
     color: '#3D5CFF',
+    marginBottom: 8,
   },
   quizDescription: {
     fontSize: 14,
     color: '#666',
     lineHeight: 20,
-    marginBottom: 12,
   },
   quizFooter: {
     flexDirection: 'row',
-    // justifyContent: 'space-between',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   difficultyBadge: {
@@ -416,16 +413,20 @@ const styles = StyleSheet.create({
   },
   startButton: {
     backgroundColor: '#3D5CFF',
+    display: 'flex',
+    justifyContent: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
+    width: '70%',
   },
   startButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     marginRight: 8,
+    fontSize: 18,
   },
   // Empty State
   emptyContainer: {

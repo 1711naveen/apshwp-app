@@ -60,6 +60,15 @@ function Home() {
     }
   };
 
+  const openNewsLink = async () => {
+    try {
+      await WebBrowser.openBrowserAsync('https://apshwp.ap.gov.in/en/category/2');
+      setMenuVisible(false);
+    } catch (error) {
+      console.error('Error opening browser:', error);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('authToken');
@@ -75,7 +84,7 @@ function Home() {
     <ScrollView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.hamburgerButton}
           onPress={() => setMenuVisible(true)}
         >
@@ -156,12 +165,12 @@ function Home() {
         animationType="slide"
         onRequestClose={() => setMenuVisible(false)}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.modalOverlay}
           onPress={() => setMenuVisible(false)}
           activeOpacity={1}
         >
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.menuContainer}
             activeOpacity={1}
           >
@@ -179,7 +188,7 @@ function Home() {
 
             {/* Menu Items */}
             <View style={styles.menuItems}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.menuItem}
                 onPress={openResourcesLink}
               >
@@ -188,7 +197,16 @@ function Home() {
                 <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={openNewsLink}
+              >
+                <Ionicons name="newspaper-outline" size={24} color="#3D5CFF" />
+                <Text style={styles.menuItemText}>News</Text>
+                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
                 style={styles.menuItem}
                 onPress={() => {
                   setMenuVisible(false);
@@ -200,7 +218,7 @@ function Home() {
                 <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.menuItem}
                 onPress={() => {
                   setMenuVisible(false);
@@ -212,7 +230,7 @@ function Home() {
                 <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.menuItem}
                 onPress={() => {
                   setMenuVisible(false);
@@ -226,13 +244,13 @@ function Home() {
 
               <View style={styles.menuDivider} />
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.menuItem}
                 onPress={handleLogout}
               >
                 <Ionicons name="log-out-outline" size={24} color="#FF6B6B" />
                 <Text style={[styles.menuItemText, { color: '#FF6B6B' }]}>Logout</Text>
-                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+                {/* <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" /> */}
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -340,7 +358,7 @@ const styles = StyleSheet.create({
   menuContainer: {
     backgroundColor: '#fff',
     width: '100%',
-    maxHeight: '70%',
+    maxHeight: '75%',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 20,
