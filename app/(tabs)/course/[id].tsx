@@ -1,19 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Dimensions,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import CommonLayout from '../../components/CommonLayout';
-
-const { width } = Dimensions.get('window');
+// import AnalyticsService from '../../services/AnalyticsService';const { width } = Dimensions.get('window');
 
 type Course = {
   id: string;
@@ -71,6 +69,14 @@ export default function CourseDetail() {
 
   const [showVideo, setShowVideo] = useState(false);
 
+  // Track screen view when component mounts
+  useEffect(() => {
+    if (course) {
+      // AnalyticsService.logScreenView(`CourseDetail_${course.id}`, 'CourseScreen');
+      // AnalyticsService.logCourseView(course.id, course.title);
+    }
+  }, [course]);
+
   if (!course) {
     return (
       <CommonLayout title="Course Not Found" showBackButton={true}>
@@ -105,8 +111,17 @@ export default function CourseDetail() {
                 style={styles.topicRow}
                 onPress={() => {
                   if (index === 0) {
+                    // Track video play event
+                    // AnalyticsService.logVideoPlay(course.id, `${course.title} - ${topic}`);
                     setShowVideo(!showVideo);
                   } else {
+                    // Track topic view
+                    // AnalyticsService.logEvent('topic_view', {
+                    //   course_id: course.id,
+                    //   course_name: course.title,
+                    //   topic_name: topic,
+                    //   topic_index: index
+                    // });
                     console.log(`Clicked topic ${index + 1}: ${topic}`);
                   }
                 }}
@@ -137,7 +152,14 @@ export default function CourseDetail() {
           {/* QUIZ BUTTON */}
           <TouchableOpacity
             style={styles.quizButton}
-            onPress={() => router.push(`/course/quiz/${course.id}`)}
+            onPress={() => {
+              // AnalyticsService.logEvent('quiz_button_click', {
+              //   course_id: course.id,
+              //   course_name: course.title,
+              //   source: 'course_detail'
+              // });
+              router.push(`/course/quiz/${course.id}`);
+            }}
           >
             <Text style={styles.quizButtonText}>Start Quiz</Text>
           </TouchableOpacity>
@@ -163,7 +185,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   headerImage: {
-    width: width,
+    width: '100%',
     height: 220,
   },
   overlayPanel: {

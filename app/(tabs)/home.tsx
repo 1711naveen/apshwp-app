@@ -5,6 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useState } from "react";
 import { Dimensions, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import HomeLayout from "../components/HomeLayout";
+// import AnalyticsService from '../services/AnalyticsService';
 
 const { width } = Dimensions.get("window");
 
@@ -32,6 +33,9 @@ function Home() {
   const [userInfo, setUserInfo] = useState<any>(null);
 
   useEffect(() => {
+    // Track screen view
+    // AnalyticsService.logScreenView('HomeScreen', 'MainScreen');
+    
     const loadUser = async () => {
       try {
         const storedUser = await AsyncStorage.getItem('userInfo');

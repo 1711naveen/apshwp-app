@@ -3,23 +3,29 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link, useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  Alert,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+// import AnalyticsService from '../services/AnalyticsService';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('8874752747');
   const [password, setPassword] = useState('Shivam@421');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+  // Track screen view
+  useEffect(() => {
+    // AnalyticsService.logScreenView('LoginScreen', 'AuthScreen');
+  }, []);
 
   // Function to speak welcome message
   const speakWelcomeMessage = (userName) => {
@@ -75,6 +81,13 @@ export default function LoginScreen() {
         // await AsyncStorage.setItem('authToken', data.token);
         // await AsyncStorage.setItem('userInfo', JSON.stringify(decoded));
         await AsyncStorage.setItem("userInfo", JSON.stringify(data.user));
+        
+        // Analytics: Log successful login
+        // await AnalyticsService.logLogin('credentials');
+        // await AnalyticsService.setUserId(data.user.id || data.user.phone || 'anonymous');
+        // await AnalyticsService.setUserProperty('user_name', data.user.name);
+        // await AnalyticsService.setUserProperty('login_method', 'credentials');
+        
         // Get user's name for welcome message
         // const userName = decoded.name || decoded.username || 'User';
         const userName = data.user.name;
@@ -88,10 +101,18 @@ export default function LoginScreen() {
         router.replace('/(tabs)/home');
       } catch (decodeError) {
         console.error('Token decode error:', decodeError);
+        // await AnalyticsService.logEvent('login_error', { 
+        //   error_type: 'token_decode_error',
+        //   error_message: decodeError.message 
+        // });
         Alert.alert('Error', 'Invalid token received from server.');
       }
     } catch (error) {
       console.error('Login error:', error);
+      // await AnalyticsService.logEvent('login_error', { 
+      //   error_type: 'api_error',
+      //   error_message: error.message 
+      // });
       if (error.message.includes('Network request failed')) {
         Alert.alert('Network Error', 'Please check your internet connection and try again.');
       } else {

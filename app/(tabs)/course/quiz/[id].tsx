@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { BackHandler, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CommonLayout from '../../../components/CommonLayout';
+// import AnalyticsService from '../../../services/AnalyticsService';
 
 export default function QuizDetailScreen() {
   const router = useRouter();
@@ -78,13 +79,17 @@ export default function QuizDetailScreen() {
 
   // Disable back button/gesture
   useEffect(() => {
+    // Track quiz start
+    // AnalyticsService.logScreenView(`QuizDetail_${id}`, 'QuizScreen');
+    // AnalyticsService.logQuizStart(id as string, `Quiz on ${id}`);
+    
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       // Return true to prevent default back action
       return true;
     });
 
     return () => backHandler.remove();
-  }, []);
+  }, [id]);
 
   const currentQuestion = shuffledQuestions[currentIndex];
 
@@ -122,6 +127,9 @@ export default function QuizDetailScreen() {
           finalScore++;
         }
       });
+      
+      // Track quiz completion
+      // AnalyticsService.logQuizComplete(id as string, `Quiz on ${id}`, finalScore, 10);
       
       // Navigate to result page
       router.push({

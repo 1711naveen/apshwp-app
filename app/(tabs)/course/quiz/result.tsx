@@ -1,11 +1,27 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import CommonLayout from '../../../components/CommonLayout';
+// import AnalyticsService from '../../../services/AnalyticsService';
 
 export default function QuizResult() {
   const router = useRouter();
   const { score, total } = useLocalSearchParams();
+
+  // Track result view
+  useEffect(() => {
+    // AnalyticsService.logScreenView('QuizResult', 'ResultScreen');
+    // AnalyticsService.logEvent('quiz_result_view', {
+    //   score: Number(score),
+    //   total: Number(total),
+    //   percentage: (Number(score) / Number(total)) * 100
+    // });
+  }, [score, total]);
+
+  const handleShare = () => {
+    // AnalyticsService.logShare('quiz_result', `quiz_score_${score}_${total}`);
+    // Add your share functionality here
+  };
 
   return (
     <CommonLayout title="Quiz Result">
@@ -18,13 +34,16 @@ export default function QuizResult() {
         <Text style={styles.congrats}>Congratulation</Text>
         <Text style={styles.subtext}>Great job, Student Name! You Did It</Text>
 
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button} onPress={handleShare}>
           <Text style={styles.buttonText}>Share</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push('/course')}
+          onPress={() => {
+            // AnalyticsService.logEvent('quiz_result_back_home');
+            router.push('/course');
+          }}
         >
           <Text style={styles.buttonText}>Back to Home</Text>
         </TouchableOpacity>
