@@ -90,7 +90,7 @@ android {
 
     namespace 'com.anonymous.apshwpapp'
     defaultConfig {
-        applicationId 'com.anonymous.apshwpapp'
+        applicationId 'com.anonymous.apshwpapp' 
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
