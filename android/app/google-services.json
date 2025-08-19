@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "64767712673",
+    "project_id": "added--analytics",
+    "storage_bucket": "added--analytics.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:64767712673:android:994414c94b699f9166bfe0",
+        "android_client_info": {
+          "package_name": "com.anonymous.apshwpapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATdEGgG4FBUcKkMj3DZlP4YU6004gR12A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

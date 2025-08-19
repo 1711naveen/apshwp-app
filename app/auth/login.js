@@ -14,6 +14,7 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import analytics from "@react-native-firebase/analytics"
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -38,6 +39,11 @@ export default function LoginScreen() {
   };
 
   const handleLogin = async () => {
+
+    await analytics().logLogin({
+      method: "facebook",
+    });
+
     try {
       console.log('Attempting login with:', { login: email, password: password });
 
@@ -138,11 +144,11 @@ export default function LoginScreen() {
               />
             </TouchableOpacity>
           </View>
-          
+
           <Pressable onPress={() => Alert.alert('Forgot password pressed')}>
             <Text style={styles.forgotPassword}>Forget password?</Text>
           </Pressable>
-{/* */}
+          {/* */}
           <TouchableOpacity
             style={styles.button}
             onPress={handleLogin}
