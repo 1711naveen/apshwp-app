@@ -1,18 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
 import Checkbox from 'expo-checkbox';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  ScrollView,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAnalytics } from '../hooks/useAnalytics';
 
 export default function SignUpScreen() {
   const [fullName, setFullName] = useState('');
@@ -27,7 +28,10 @@ export default function SignUpScreen() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-  const handleSignUp = () => {
+  // Initialize analytics hook
+  const { trackSignUp, trackEvent } = useAnalytics();
+
+  const handleSignUp = async () => {
     if (!fullName || !gender || !age || !phone || !password || !state || !district) {
       Alert.alert('Please fill all required fields.');
       return;
@@ -36,6 +40,19 @@ export default function SignUpScreen() {
       Alert.alert('Please agree to the terms and conditions');
       return;
     }
+    
+    // Track signup event
+    await trackSignUp('email');
+    
+    // Track additional signup info
+    await trackEvent('signup_details', {
+      gender,
+      age_group: age,
+      state,
+      district,
+      has_referral: referralCode ? true : false,
+    });
+    
     Alert.alert('Sign up successful!');
     // Implement API call here
   };

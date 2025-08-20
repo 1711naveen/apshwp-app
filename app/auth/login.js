@@ -14,13 +14,16 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import analytics from "@react-native-firebase/analytics"
+import { useAnalytics } from '../hooks/useAnalytics';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('8874752747');
   const [password, setPassword] = useState('Shivam@421');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  
+  // Initialize analytics hook
+  const { trackLogin, setUserId, setUserProperty } = useAnalytics();
 
   // Function to speak welcome message
   const speakWelcomeMessage = (userName) => {
@@ -40,9 +43,8 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
 
-    await analytics().logLogin({
-      method: "facebook",
-    });
+    // Track login attempt
+    await trackLogin('email');
 
     try {
       console.log('Attempting login with:', { login: email, password: password });
@@ -81,6 +83,14 @@ export default function LoginScreen() {
         // await AsyncStorage.setItem('authToken', data.token);
         // await AsyncStorage.setItem('userInfo', JSON.stringify(decoded));
         await AsyncStorage.setItem("userInfo", JSON.stringify(data.user));
+        
+        // Set analytics user properties
+        await setUserId(data.user.id?.toString() || data.user.login);
+        await setUserProperty('user_type', 'registered');
+        if (data.user.name) {
+          await setUserProperty('user_name', data.user.name);
+        }
+        
         // Get user's name for welcome message
         // const userName = decoded.name || decoded.username || 'User';
         const userName = data.user.name;

@@ -5,6 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useState } from "react";
 import { Dimensions, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import HomeLayout from "../components/HomeLayout";
+import { useAnalytics } from '../hooks/useAnalytics';
 
 const { width } = Dimensions.get("window");
 
@@ -30,6 +31,9 @@ function Home() {
   const [name, setName] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
   const [userInfo, setUserInfo] = useState<any>(null);
+  
+  // Initialize analytics hook
+  const { trackButtonPress, trackEvent } = useAnalytics();
 
   useEffect(() => {
     const loadUser = async () => {
@@ -54,6 +58,7 @@ function Home() {
 
   const openResourcesLink = async () => {
     try {
+      await trackButtonPress('resources_link', 'home');
       await WebBrowser.openBrowserAsync('https://apshwp.ap.gov.in/en#resourceSection');
       setMenuVisible(false);
     } catch (error) {
@@ -63,6 +68,7 @@ function Home() {
 
   const openNewsLink = async () => {
     try {
+      await trackButtonPress('news_link', 'home');
       await WebBrowser.openBrowserAsync('https://apshwp.ap.gov.in/en/category/2');
       setMenuVisible(false);
     } catch (error) {
@@ -72,6 +78,7 @@ function Home() {
 
   const handleLogout = async () => {
     try {
+      await trackEvent('logout', { screen: 'home' });
       await AsyncStorage.removeItem('authToken');
       await AsyncStorage.removeItem('userInfo');
       setMenuVisible(false);
