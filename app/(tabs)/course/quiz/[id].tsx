@@ -66,10 +66,12 @@ export default function QuizDetailScreen() {
     },
   ];
 
+
   // ✅ Shuffle ONCE using useMemo
   const shuffledQuestions = useMemo(() => {
     return [...questionBank].sort(() => 0.5 - Math.random()).slice(0, 10);
   }, []);
+
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -82,7 +84,6 @@ export default function QuizDetailScreen() {
       // Return true to prevent default back action
       return true;
     });
-
     return () => backHandler.remove();
   }, []);
 
