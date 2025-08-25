@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -35,33 +35,31 @@ interface CourseTheme {
   status: number;
 }
 
-interface QuizThemeIcon {
-  id: number;
-  name: string;
-  description: string;
-  url: string;
-  image_path: string;
+interface Question {
+  questionId: number;
+  questionText: string;
+  answer: number;
   status: number;
-  quizId: number;
-  quizname: string;
-  moduleId: number;
-  moduleName: string;
-  link: string;
-  order: number;
-  Modulepdf: string | null;
-  moduleStatus: number;
-  sectionId: number | null;
-  sectionName: string | null;
-  sectionVideos: string | null;
-  sectionorder: number | null;
-  sectionStatus: number | null;
+  options: {
+    optionId: number;
+    optionText: string;
+    status: string;
+  }[];
 }
 
-interface GroupedModule {
+interface Section {
+  sectionId?: number;
+  sectionName?: string;
+  sectionVideoLink?: string | null;
+  status?: number;
+  questions: Question[];
+}
+
+interface Module {
   moduleId: number;
   moduleName: string;
-  moduleStatus: number;
-  sections: any[];
+  moduleLink: string;
+  sections: Section[];
 }
 
 interface ModuleProgress {
@@ -79,12 +77,12 @@ interface CourseApiResponse {
   message: string;
   data: {
     theme: CourseTheme;
-    quizz_themeicon: QuizThemeIcon[];
-    groupedModules: GroupedModule[];
+    modules: Module[];
     moduleProgress: ModuleProgress[];
     sectionProgress: any[];
     user_quizzes: any;
-    themeId: string;
+    themeId: number;
+    userId: number | null;
   };
 }
 
@@ -111,11 +109,22 @@ export default function CourseDetail() {
   const router = useRouter();
   const [showVideo, setShowVideo] = useState(false);
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
+  const [selectedSectionId, setSelectedSectionId] = useState<number | null>(null);
   const [course, setCourse] = useState<ApiCourse | null>(null);
   const [courseDetails, setCourseDetails] = useState<CourseApiResponse['data'] | null>(null);
   const [processedModules, setProcessedModules] = useState<ProcessedModule[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [expandedModules, setExpandedModules] = useState<Set<number>>(new Set());
+  
+  // Quiz states
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
+  const [currentQuizQuestions, setCurrentQuizQuestions] = useState<Question[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
+  const [showResults, setShowResults] = useState(false);
+  const [quizModuleId, setQuizModuleId] = useState<number | null>(null);
+  const [quizSectionId, setQuizSectionId] = useState<number | null>(null);
   
   // Initialize analytics hook
   const { trackEvent, trackCourseComplete } = useAnalytics();
@@ -158,14 +167,9 @@ export default function CourseDetail() {
 
   // Process the complex API response into usable data
   const processModulesData = (data: CourseApiResponse['data']): ProcessedModule[] => {
-    const { groupedModules, quizz_themeicon, moduleProgress } = data;
+    const { modules, moduleProgress } = data;
     
-    return groupedModules.map((module) => {
-      // Find the video link for this module
-      const moduleWithVideo = quizz_themeicon.find(
-        (item) => item.moduleId === module.moduleId
-      );
-      
+    return modules.map((module, index) => {
       // Find progress for this module
       const progress = moduleProgress.find(
         (prog) => prog.module_id === module.moduleId && prog.section_id === null
@@ -174,13 +178,13 @@ export default function CourseDetail() {
       return {
         moduleId: module.moduleId,
         moduleName: module.moduleName,
-        moduleStatus: module.moduleStatus,
-        videoLink: moduleWithVideo?.link || null,
-        order: moduleWithVideo?.order || module.moduleId,
+        moduleStatus: 1, // Default status since it's not in the new API
+        videoLink: module.moduleLink || null,
+        order: index + 1, // Use index as order since order is not provided
         isCompleted: progress?.is_completed === 'COMPLETED',
         timeTaken: progress?.time_taken || '00:00:00',
       };
-    }).sort((a, b) => a.order - b.order);
+    });
   };
 
   // Convert YouTube URL to embeddable format
@@ -201,6 +205,7 @@ export default function CourseDetail() {
   // Handle module selection
   const handleModuleSelect = async (module: ProcessedModule) => {
     setSelectedModuleId(module.moduleId);
+    setSelectedSectionId(null); // Reset section selection
     setShowVideo(true);
     setIsMenuOpen(false); // Close menu after selection
     
@@ -213,9 +218,106 @@ export default function CourseDetail() {
     });
   };
 
+  // Toggle module expansion in menu
+  const toggleModuleExpansion = (moduleId: number) => {
+    const newExpanded = new Set(expandedModules);
+    if (newExpanded.has(moduleId)) {
+      newExpanded.delete(moduleId);
+    } else {
+      newExpanded.add(moduleId);
+    }
+    setExpandedModules(newExpanded);
+  };
+
+  // Handle section selection (for quizzes)
+  const handleSectionSelect = async (moduleId: number, sectionId: number, sectionName: string) => {
+    const module = courseDetails?.modules.find(m => m.moduleId === moduleId);
+    const section = module?.sections.find(s => s.sectionId === sectionId);
+    
+    if (section && section.questions && section.questions.length > 0) {
+      // Start local quiz
+      setIsMenuOpen(false);
+      setCurrentQuizQuestions(section.questions);
+      setQuizModuleId(moduleId);
+      setQuizSectionId(sectionId);
+      setCurrentQuestionIndex(0);
+      setSelectedAnswers({});
+      setShowResults(false);
+      setIsQuizModalOpen(true);
+      
+      await trackEvent('section_quiz_started', {
+        course_id: id,
+        course_name: courseDetails?.theme.name,
+        module_id: moduleId,
+        section_id: sectionId,
+        section_name: sectionName,
+        question_count: section.questions.length,
+      });
+    } else {
+      Alert.alert('No Quiz', 'This section does not have any quiz questions');
+    }
+  };
+
   // Toggle hamburger menu
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  // Quiz handlers
+  const handleAnswerSelect = (questionId: number, optionId: number) => {
+    setSelectedAnswers(prev => ({
+      ...prev,
+      [questionId]: optionId
+    }));
+  };
+
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      // Show results
+      setShowResults(true);
+    }
+  };
+
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
+  };
+
+  const calculateQuizResults = () => {
+    let correctCount = 0;
+    let totalQuestions = currentQuizQuestions.length;
+
+    currentQuizQuestions.forEach(question => {
+      const selectedAnswer = selectedAnswers[question.questionId];
+      if (selectedAnswer === question.answer) {
+        correctCount++;
+      }
+    });
+
+    return {
+      correctCount,
+      totalQuestions,
+      percentage: Math.round((correctCount / totalQuestions) * 100)
+    };
+  };
+
+  const closeQuiz = () => {
+    setIsQuizModalOpen(false);
+    setCurrentQuizQuestions([]);
+    setCurrentQuestionIndex(0);
+    setSelectedAnswers({});
+    setShowResults(false);
+    setQuizModuleId(null);
+    setQuizSectionId(null);
+  };
+
+  const retakeQuiz = () => {
+    setCurrentQuestionIndex(0);
+    setSelectedAnswers({});
+    setShowResults(false);
   };
 
   // Handle quiz navigation
@@ -223,7 +325,7 @@ export default function CourseDetail() {
     await trackEvent('quiz_start_from_course', {
       course_id: id,
       course_name: courseDetails?.theme.name,
-      quiz_id: courseDetails?.quizz_themeicon[0]?.quizId,
+      theme_id: courseDetails?.themeId,
     });
     router.push(`/(tabs)/quiz`);
   };
@@ -253,19 +355,14 @@ export default function CourseDetail() {
 
   // Handle PDF download/view
   const handleViewPdf = async () => {
-    if (courseDetails?.quizz_themeicon[0]?.url && courseDetails.quizz_themeicon[0].url !== 'https://apshwp.ap.gov.in/storage/') {
-      try {
-        await trackEvent('course_pdf_opened', {
-          course_id: id,
-          course_name: courseDetails.theme.name,
-        });
-        await WebBrowser.openBrowserAsync(courseDetails.quizz_themeicon[0].url);
-      } catch (error) {
-        Alert.alert('Error', 'Could not open the course material');
-      }
-    } else {
-      Alert.alert('Coming Soon', 'This course material will be available soon');
-    }
+    // Since PDF URLs are not available in the new API structure, 
+    // we'll show a coming soon message for now
+    Alert.alert('Coming Soon', 'Course materials will be available soon');
+    
+    await trackEvent('course_pdf_requested', {
+      course_id: id,
+      course_name: courseDetails?.theme.name,
+    });
   };
 
   // Loading state
@@ -303,21 +400,6 @@ export default function CourseDetail() {
   return (
     <CommonLayout title={courseDetails.theme.name} showBackButton={true}>
       <View style={styles.container}>
-        {/* Hamburger Menu Button */}
-        <TouchableOpacity
-          style={styles.hamburgerButton}
-          onPress={toggleMenu}
-        >
-          <Ionicons 
-            name={isMenuOpen ? "close" : "menu"} 
-            size={24} 
-            color="#3D5CFF" 
-          />
-          <Text style={styles.hamburgerText}>
-            {isMenuOpen ? "Close Menu" : "Course Modules"}
-          </Text>
-        </TouchableOpacity>
-
         <View style={styles.contentContainer}>
           {/* Menu backdrop/overlay */}
           {isMenuOpen && (
@@ -334,55 +416,126 @@ export default function CourseDetail() {
               <View style={styles.modulesHeader}>
                 <Text style={styles.modulesTitle}>Course Modules</Text>
                 <TouchableOpacity onPress={toggleMenu} style={styles.closeButton}>
-                  <Ionicons name="chevron-back" size={20} color="#666" />
+                  <Ionicons name="close" size={24} color="#666" />
                 </TouchableOpacity>
               </View>
               
               <ScrollView showsVerticalScrollIndicator={false} style={styles.modulesScrollView}>
-                {processedModules.map((module, index) => (
-                  <TouchableOpacity
-                    key={module.moduleId}
-                    style={[
-                      styles.moduleItem,
-                      selectedModuleId === module.moduleId && styles.moduleItemSelected,
-                    ]}
-                    onPress={() => handleModuleSelect(module)}
-                  >
-                    <View style={styles.moduleInfo}>
-                      <Text style={styles.moduleNumber}>
-                        {String(index + 1).padStart(2, '0')}
-                      </Text>
-                      <View style={styles.moduleTextContainer}>
-                        <Text
-                          style={[
-                            styles.moduleTitle,
-                            selectedModuleId === module.moduleId && styles.moduleSelected,
-                          ]}
-                          numberOfLines={2}
-                        >
-                          {module.moduleName}
+                {courseDetails.modules.map((module, index) => (
+                  <View key={module.moduleId} style={styles.moduleContainer}>
+                    {/* Module Header */}
+                    <TouchableOpacity
+                      style={[
+                        styles.moduleItem,
+                        selectedModuleId === module.moduleId && styles.moduleItemSelected,
+                      ]}
+                      onPress={() => {
+                        const processedModule: ProcessedModule = {
+                          moduleId: module.moduleId,
+                          moduleName: module.moduleName,
+                          moduleStatus: 1,
+                          videoLink: module.moduleLink || null,
+                          order: index + 1,
+                          isCompleted: false,
+                          timeTaken: '00:00:00',
+                        };
+                        handleModuleSelect(processedModule);
+                      }}
+                    >
+                      <View style={styles.moduleInfo}>
+                        <Text style={styles.moduleNumber}>
+                          {String(index + 1).padStart(2, '0')}
                         </Text>
-                        {module.isCompleted && (
-                          <View style={styles.completedBadge}>
-                            <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
-                            <Text style={styles.completedText}>Completed</Text>
-                          </View>
+                        <View style={styles.moduleTextContainer}>
+                          <Text
+                            style={[
+                              styles.moduleTitle,
+                              selectedModuleId === module.moduleId && styles.moduleSelected,
+                            ]}
+                            numberOfLines={2}
+                          >
+                            {module.moduleName}
+                          </Text>
+                        </View>
+                      </View>
+                      
+                      {/* Play button and expand button */}
+                      <View style={styles.moduleActions}>
+                        <TouchableOpacity
+                          style={[
+                            styles.playButton,
+                            selectedModuleId === module.moduleId && styles.playButtonSelected,
+                          ]}
+                          onPress={() => {
+                            const processedModule: ProcessedModule = {
+                              moduleId: module.moduleId,
+                              moduleName: module.moduleName,
+                              moduleStatus: 1,
+                              videoLink: module.moduleLink || null,
+                              order: index + 1,
+                              isCompleted: false,
+                              timeTaken: '00:00:00',
+                            };
+                            handleModuleSelect(processedModule);
+                          }}
+                        >
+                          <Ionicons 
+                            name="play" 
+                            size={16} 
+                            color={selectedModuleId === module.moduleId ? "#fff" : "#3D5CFF"} 
+                          />
+                        </TouchableOpacity>
+                        
+                        {/* Expand button for sections */}
+                        {module.sections && module.sections.length > 0 && (
+                          <TouchableOpacity
+                            style={styles.expandButton}
+                            onPress={() => toggleModuleExpansion(module.moduleId)}
+                          >
+                            <Ionicons 
+                              name={expandedModules.has(module.moduleId) ? "chevron-up" : "chevron-down"} 
+                              size={16} 
+                              color="#666" 
+                            />
+                          </TouchableOpacity>
                         )}
                       </View>
-                    </View>
-                    
-                    {/* Play button */}
-                    <View style={[
-                      styles.playButton,
-                      selectedModuleId === module.moduleId && styles.playButtonSelected,
-                    ]}>
-                      <Ionicons 
-                        name="play" 
-                        size={16} 
-                        color={selectedModuleId === module.moduleId ? "#fff" : "#3D5CFF"} 
-                      />
-                    </View>
-                  </TouchableOpacity>
+                    </TouchableOpacity>
+
+                    {/* Module Sections - Expandable */}
+                    {expandedModules.has(module.moduleId) && module.sections && (
+                      <View style={styles.sectionsContainer}>
+                        {module.sections.map((section, sectionIndex) => (
+                          <TouchableOpacity
+                            key={section.sectionId || sectionIndex}
+                            style={styles.sectionItem}
+                            onPress={() => {
+                              if (section.sectionId && section.sectionName) {
+                                handleSectionSelect(module.moduleId, section.sectionId, section.sectionName);
+                              }
+                            }}
+                          >
+                            <View style={styles.sectionInfo}>
+                              <Ionicons 
+                                name="help-circle-outline" 
+                                size={16} 
+                                color="#3D5CFF" 
+                              />
+                              <Text style={styles.sectionName}>
+                                {section.sectionName || `Section ${sectionIndex + 1}`}
+                              </Text>
+                              {section.questions && section.questions.length > 0 && (
+                                <Text style={styles.questionCount}>
+                                  ({section.questions.length} questions)
+                                </Text>
+                              )}
+                            </View>
+                            <Ionicons name="chevron-forward" size={16} color="#999" />
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
                 ))}
               </ScrollView>
 
@@ -416,13 +569,13 @@ export default function CourseDetail() {
               <View style={styles.videoContainer}>
                 <View style={styles.videoHeader}>
                   <Text style={styles.videoTitle}>{selectedModule.moduleName}</Text>
-                  {/* <TouchableOpacity
+                  <TouchableOpacity
                     style={styles.moduleInfoButton}
                     onPress={toggleMenu}
                   >
                     <Ionicons name="list" size={20} color="#3D5CFF" />
                     <Text style={styles.moduleInfoText}>Modules</Text>
-                  </TouchableOpacity> */}
+                  </TouchableOpacity>
                 </View>
                 
                 <WebView
@@ -473,6 +626,195 @@ export default function CourseDetail() {
           </View>
         </View>
       </View>
+
+      {/* Quiz Modal */}
+      <Modal
+        visible={isQuizModalOpen}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.quizModalContainer}>
+          {/* Quiz Header */}
+          <View style={styles.quizHeader}>
+            <TouchableOpacity onPress={closeQuiz} style={styles.closeQuizButton}>
+              <Ionicons name="close" size={24} color="#666" />
+            </TouchableOpacity>
+            <Text style={styles.quizTitle}>Section Quiz</Text>
+            <View style={styles.quizProgress}>
+              <Text style={styles.quizProgressText}>
+                {showResults ? 'Results' : `${currentQuestionIndex + 1}/${currentQuizQuestions.length}`}
+              </Text>
+            </View>
+          </View>
+
+          {showResults ? (
+            // Quiz Results
+            <View style={styles.quizResultsContainer}>
+              <ScrollView contentContainerStyle={styles.quizResultsContent}>
+                <View style={styles.quizScoreCard}>
+                  <Ionicons 
+                    name={calculateQuizResults().percentage >= 70 ? "checkmark-circle" : "close-circle"} 
+                    size={64} 
+                    color={calculateQuizResults().percentage >= 70 ? "#4CAF50" : "#FF5722"} 
+                  />
+                  <Text style={styles.quizScoreText}>
+                    {calculateQuizResults().correctCount}/{calculateQuizResults().totalQuestions}
+                  </Text>
+                  <Text style={styles.quizPercentageText}>
+                    {calculateQuizResults().percentage}% Correct
+                  </Text>
+                  <Text style={styles.quizResultMessage}>
+                    {calculateQuizResults().percentage >= 70 
+                      ? "Great job! You passed the quiz." 
+                      : "Keep studying and try again."}
+                  </Text>
+                </View>
+
+                {/* Detailed Results */}
+                <View style={styles.quizDetailedResults}>
+                  <Text style={styles.detailedResultsTitle}>Detailed Results</Text>
+                  {currentQuizQuestions.map((question, index) => {
+                    const selectedAnswer = selectedAnswers[question.questionId];
+                    const isCorrect = selectedAnswer === question.answer;
+                    const selectedOption = question.options.find(opt => opt.optionId === selectedAnswer);
+                    const correctOption = question.options.find(opt => opt.optionId === question.answer);
+
+                    return (
+                      <View key={question.questionId} style={styles.resultQuestionCard}>
+                        <Text style={styles.resultQuestionNumber}>Question {index + 1}</Text>
+                        <Text style={styles.resultQuestionText}>{question.questionText}</Text>
+                        
+                        <View style={styles.resultAnswerSection}>
+                          <View style={[styles.answerResult, isCorrect ? styles.correctAnswer : styles.incorrectAnswer]}>
+                            <Ionicons 
+                              name={isCorrect ? "checkmark-circle" : "close-circle"} 
+                              size={16} 
+                              color={isCorrect ? "#4CAF50" : "#FF5722"} 
+                            />
+                            <Text style={styles.answerResultText}>
+                              Your answer: {selectedOption?.optionText || 'Not answered'}
+                            </Text>
+                          </View>
+                          
+                          {!isCorrect && (
+                            <View style={[styles.answerResult, styles.correctAnswer]}>
+                              <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                              <Text style={styles.answerResultText}>
+                                Correct answer: {correctOption?.optionText}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+
+                <View style={styles.quizResultActions}>
+                  <TouchableOpacity style={styles.retakeQuizButton} onPress={retakeQuiz}>
+                    <Ionicons name="refresh" size={16} color="#3D5CFF" />
+                    <Text style={styles.retakeQuizText}>Retake Quiz</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.closeQuizResultButton} onPress={closeQuiz}>
+                    <Text style={styles.closeQuizResultText}>Close</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          ) : (
+            // Quiz Questions
+            <View style={styles.quizContent}>
+              {currentQuizQuestions.length > 0 && (
+                <ScrollView style={styles.questionContainer}>
+                  <View style={styles.questionCard}>
+                    <Text style={styles.questionNumber}>
+                      Question {currentQuestionIndex + 1}
+                    </Text>
+                    <Text style={styles.questionText}>
+                      {currentQuizQuestions[currentQuestionIndex].questionText}
+                    </Text>
+                    
+                    <View style={styles.optionsContainer}>
+                      {currentQuizQuestions[currentQuestionIndex].options.map((option) => {
+                        const isSelected = selectedAnswers[currentQuizQuestions[currentQuestionIndex].questionId] === option.optionId;
+                        
+                        return (
+                          <TouchableOpacity
+                            key={option.optionId}
+                            style={[
+                              styles.optionButton,
+                              isSelected && styles.selectedOption
+                            ]}
+                            onPress={() => handleAnswerSelect(currentQuizQuestions[currentQuestionIndex].questionId, option.optionId)}
+                          >
+                            <View style={[
+                              styles.optionRadio,
+                              isSelected && styles.selectedOptionRadio
+                            ]}>
+                              {isSelected && (
+                                <View style={styles.optionRadioInner} />
+                              )}
+                            </View>
+                            <Text style={[
+                              styles.optionText,
+                              isSelected && styles.selectedOptionText
+                            ]}>
+                              {option.optionText}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                </ScrollView>
+              )}
+
+              {/* Quiz Navigation */}
+              <View style={styles.quizNavigation}>
+                <TouchableOpacity 
+                  style={[
+                    styles.quizNavButton, 
+                    styles.prevButton,
+                    currentQuestionIndex === 0 && styles.disabledButton
+                  ]}
+                  onPress={handlePreviousQuestion}
+                  disabled={currentQuestionIndex === 0}
+                >
+                  <Ionicons name="chevron-back" size={20} color={currentQuestionIndex === 0 ? "#ccc" : "#3D5CFF"} />
+                  <Text style={[
+                    styles.quizNavButtonText,
+                    currentQuestionIndex === 0 && styles.disabledButtonText
+                  ]}>
+                    Previous
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[
+                    styles.quizNavButton, 
+                    styles.nextButton,
+                    !selectedAnswers[currentQuizQuestions[currentQuestionIndex]?.questionId] && styles.disabledButton
+                  ]}
+                  onPress={handleNextQuestion}
+                  disabled={!selectedAnswers[currentQuizQuestions[currentQuestionIndex]?.questionId]}
+                >
+                  <Text style={[
+                    styles.quizNavButtonText,
+                    !selectedAnswers[currentQuizQuestions[currentQuestionIndex]?.questionId] && styles.disabledButtonText
+                  ]}>
+                    {currentQuestionIndex === currentQuizQuestions.length - 1 ? 'Finish Quiz' : 'Next'}
+                  </Text>
+                  <Ionicons 
+                    name={currentQuestionIndex === currentQuizQuestions.length - 1 ? "checkmark" : "chevron-forward"} 
+                    size={20} 
+                    color={!selectedAnswers[currentQuizQuestions[currentQuestionIndex]?.questionId] ? "#ccc" : "#fff"} 
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+      </Modal>
     </CommonLayout>
   );
 }
@@ -510,33 +852,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
-  },
-
-  // Hamburger menu button
-  hamburgerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  hamburgerText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#3D5CFF',
-    marginLeft: 8,
   },
 
   // Main layout
@@ -607,6 +922,57 @@ const styles = StyleSheet.create({
     backgroundColor: '#E3F2FD',
     borderWidth: 2,
     borderColor: '#3D5CFF',
+  },
+  moduleContainer: {
+    marginBottom: 8,
+  },
+  moduleActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  expandButton: {
+    padding: 4,
+    borderRadius: 4,
+    backgroundColor: '#F0F0F0',
+  },
+  
+  // Sections styles
+  sectionsContainer: {
+    marginLeft: 42, // Align with module text
+    marginTop: 8,
+    paddingLeft: 16,
+    borderLeftWidth: 2,
+    borderLeftColor: '#E0E0E0',
+  },
+  sectionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F9F9F9',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
+  },
+  sectionInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  sectionName: {
+    fontSize: 13,
+    color: '#333',
+    marginLeft: 8,
+    fontWeight: '500',
+    flex: 1,
+  },
+  questionCount: {
+    fontSize: 11,
+    color: '#666',
+    marginLeft: 4,
+    fontStyle: 'italic',
   },
   moduleInfo: {
     flex: 1,
@@ -923,5 +1289,261 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+  },
+
+  // Quiz Modal Styles
+  quizModalContainer: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+  },
+  quizHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  closeQuizButton: {
+    padding: 8,
+  },
+  quizTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0D0D26',
+  },
+  quizProgress: {
+    backgroundColor: '#3D5CFF',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  quizProgressText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  
+  // Quiz Content
+  quizContent: {
+    flex: 1,
+  },
+  questionContainer: {
+    flex: 1,
+    padding: 16,
+  },
+  questionCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+  },
+  questionNumber: {
+    fontSize: 14,
+    color: '#3D5CFF',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  questionText: {
+    fontSize: 16,
+    color: '#0D0D26',
+    fontWeight: '500',
+    lineHeight: 24,
+    marginBottom: 20,
+  },
+  optionsContainer: {
+    gap: 12,
+  },
+  optionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  selectedOption: {
+    backgroundColor: '#E3F2FD',
+    borderColor: '#3D5CFF',
+  },
+  optionRadio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#ccc',
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedOptionRadio: {
+    borderColor: '#3D5CFF',
+  },
+  optionRadioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#3D5CFF',
+  },
+  optionText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 20,
+  },
+  selectedOptionText: {
+    color: '#3D5CFF',
+    fontWeight: '600',
+  },
+  
+  // Quiz Navigation
+  quizNavigation: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  quizNavButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  prevButton: {
+    backgroundColor: '#F8F9FA',
+  },
+  nextButton: {
+    backgroundColor: '#3D5CFF',
+  },
+  disabledButton: {
+    backgroundColor: '#F0F0F0',
+  },
+  quizNavButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginHorizontal: 4,
+  },
+  disabledButtonText: {
+    color: '#ccc',
+  },
+  
+  // Quiz Results
+  quizResultsContainer: {
+    flex: 1,
+  },
+  quizResultsContent: {
+    padding: 16,
+  },
+  quizScoreCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  quizScoreText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#0D0D26',
+    marginTop: 16,
+  },
+  quizPercentageText: {
+    fontSize: 18,
+    color: '#666',
+    marginTop: 4,
+  },
+  quizResultMessage: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  quizDetailedResults: {
+    marginBottom: 20,
+  },
+  detailedResultsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0D0D26',
+    marginBottom: 16,
+  },
+  resultQuestionCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  resultQuestionNumber: {
+    fontSize: 14,
+    color: '#3D5CFF',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  resultQuestionText: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  resultAnswerSection: {
+    gap: 8,
+  },
+  answerResult: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 8,
+  },
+  correctAnswer: {
+    backgroundColor: '#E8F5E8',
+  },
+  incorrectAnswer: {
+    backgroundColor: '#FFE8E8',
+  },
+  answerResultText: {
+    fontSize: 13,
+    marginLeft: 8,
+    flex: 1,
+  },
+  quizResultActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  retakeQuizButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#3D5CFF',
+  },
+  retakeQuizText: {
+    color: '#3D5CFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  closeQuizResultButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3D5CFF',
+    paddingVertical: 14,
+    borderRadius: 8,
+  },
+  closeQuizResultText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
