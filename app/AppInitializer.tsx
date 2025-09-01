@@ -17,7 +17,7 @@ export default function AppInitializer() {
     const checkAppState = async () => {
         try {
             // uncomment for testing
-            // await resetFirstLaunch();
+            await resetFirstLaunch();
             // Add a small delay to prevent flash
             await new Promise(resolve => setTimeout(resolve, 500));
 

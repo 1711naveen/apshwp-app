@@ -15,6 +15,7 @@ import {
 import { WebView } from 'react-native-webview';
 import CommonLayout from '../../components/CommonLayout';
 import { useAnalytics } from '../../hooks/useAnalytics';
+import { getUserInfo } from '../../utils/appStorage';
 
 const { width } = Dimensions.get('window');
 
@@ -133,7 +134,12 @@ export default function CourseDetail() {
   const fetchCourseDetails = async (courseId: string) => {
     try {
       setLoading(true);
-      const response = await fetch(`https://apshwp.ap.gov.in/api/courses/${courseId}`);
+      
+      // Get user info from storage
+      const userInfo = await getUserInfo();
+      const currentUserId = userInfo?.id || userInfo?.user_id || '1103';
+      
+      const response = await fetch(`https://apshwp.ap.gov.in/api/courses/${courseId}?user_id=${currentUserId}`);
       const data: CourseApiResponse = await response.json();
       
       if (data.success) {
@@ -170,9 +176,11 @@ export default function CourseDetail() {
     const { modules, moduleProgress } = data;
     
     return modules.map((module, index) => {
-      // Find progress for this module
+      // Find progress for this specific module in this theme
       const progress = moduleProgress.find(
-        (prog) => prog.module_id === module.moduleId && prog.section_id === null
+        (prog) => prog.module_id === module.moduleId && 
+                   prog.theme_id === data.themeId && 
+                   prog.section_id === null
       );
       
       return {
@@ -208,6 +216,67 @@ export default function CourseDetail() {
     setSelectedSectionId(null); // Reset section selection
     setShowVideo(true);
     setIsMenuOpen(false); // Close menu after selection
+    
+    // Mark video as completed immediately when opened
+    try {
+      const userInfo = await getUserInfo();
+      const currentUserId = userInfo?.id || userInfo?.user_id || '1103';
+      
+      const markCompletePayload = {
+        users_id: parseInt(currentUserId),
+        theme_id: courseDetails?.themeId || parseInt(Array.isArray(id) ? id[0] : id),
+        module_id: module.moduleId,
+        section_id: "0",
+        is_completed: "COMPLETED",
+        time_taken: 320 // Default time taken when marking as completed immediately
+      };
+      
+      const response = await fetch('https://apshwp.ap.gov.in/api/courses/mark-video-complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(markCompletePayload),
+      });
+      
+      if (response.ok) {
+        console.log('Video marked as completed successfully');
+        
+        // Update local state immediately to show completion
+        setProcessedModules(prevModules => 
+          prevModules.map(m => 
+            m.moduleId === module.moduleId 
+              ? { ...m, isCompleted: true, timeTaken: '00:05:20' }
+              : m
+          )
+        );
+        
+        // Also update courseDetails to reflect the change in the hamburger menu
+        if (courseDetails) {
+          const newProgress = {
+            id: Date.now(),
+            users_id: parseInt(currentUserId),
+            theme_id: courseDetails.themeId,
+            module_id: module.moduleId,
+            section_id: null,
+            is_completed: 'COMPLETED' as const,
+            time_taken: '00:05:20'
+          };
+          
+          setCourseDetails(prev => ({
+            ...prev!,
+            moduleProgress: [
+              ...prev!.moduleProgress.filter(p => !(p.module_id === module.moduleId && p.theme_id === courseDetails.themeId && p.section_id === null)),
+              newProgress
+            ]
+          }));
+        }
+      } else {
+        console.warn('Failed to mark video as completed');
+      }
+    } catch (error) {
+      console.error('Error marking video as completed:', error);
+    }
     
     await trackEvent('module_selected', {
       course_id: id,
@@ -436,8 +505,16 @@ export default function CourseDetail() {
                           moduleStatus: 1,
                           videoLink: module.moduleLink || null,
                           order: index + 1,
-                          isCompleted: false,
-                          timeTaken: '00:00:00',
+                          isCompleted: courseDetails?.moduleProgress.some(
+                            (prog) => prog.module_id === module.moduleId && 
+                                      prog.section_id === null && 
+                                      prog.is_completed === 'COMPLETED'
+                          ) || false,
+                          timeTaken: courseDetails?.moduleProgress.find(
+                            (prog) => prog.module_id === module.moduleId && 
+                                      prog.section_id === null && 
+                                      prog.is_completed === 'COMPLETED'
+                          )?.time_taken || '00:00:00',
                         };
                         handleModuleSelect(processedModule);
                       }}
@@ -456,11 +533,49 @@ export default function CourseDetail() {
                           >
                             {module.moduleName}
                           </Text>
+                          {/* Show completion status */}
+                          {courseDetails?.moduleProgress.some(
+                            (prog) => prog.module_id === module.moduleId && 
+                                      prog.theme_id === courseDetails.themeId &&
+                                      prog.section_id === null && 
+                                      prog.is_completed === 'COMPLETED'
+                          ) && (
+                            <View style={styles.completedBadge}>
+                              <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+                              <Text style={styles.completedText}>Module Completed</Text>
+                            </View>
+                          )}
+                          {/* Show currently playing status */}
+                          {selectedModuleId === module.moduleId && (
+                            <View style={styles.nowPlayingBadge}>
+                              <Ionicons name="play" size={12} color="#3D5CFF" />
+                              <Text style={styles.nowPlayingText}>Now Playing</Text>
+                            </View>
+                          )}
                         </View>
                       </View>
                       
-                      {/* Play button and expand button */}
+                      {/* Status indicators and action buttons */}
                       <View style={styles.moduleActions}>
+                        {/* Show completion checkmark */}
+                        {courseDetails?.moduleProgress.some(
+                          (prog) => prog.module_id === module.moduleId && 
+                                    prog.theme_id === courseDetails.themeId &&
+                                    prog.section_id === null && 
+                                    prog.is_completed === 'COMPLETED'
+                        ) && (
+                          <View style={styles.completedIndicator}>
+                            <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+                          </View>
+                        )}
+                        
+                        {/* Show currently playing indicator */}
+                        {selectedModuleId === module.moduleId && (
+                          <View style={styles.playingIndicator}>
+                            <Ionicons name="volume-high" size={16} color="#3D5CFF" />
+                          </View>
+                        )}
+                        
                         <TouchableOpacity
                           style={[
                             styles.playButton,
@@ -473,8 +588,18 @@ export default function CourseDetail() {
                               moduleStatus: 1,
                               videoLink: module.moduleLink || null,
                               order: index + 1,
-                              isCompleted: false,
-                              timeTaken: '00:00:00',
+                              isCompleted: courseDetails?.moduleProgress.some(
+                                (prog) => prog.module_id === module.moduleId && 
+                                          prog.theme_id === courseDetails.themeId &&
+                                          prog.section_id === null && 
+                                          prog.is_completed === 'COMPLETED'
+                              ) || false,
+                              timeTaken: courseDetails?.moduleProgress.find(
+                                (prog) => prog.module_id === module.moduleId && 
+                                          prog.theme_id === courseDetails.themeId &&
+                                          prog.section_id === null && 
+                                          prog.is_completed === 'COMPLETED'
+                              )?.time_taken || '00:00:00',
                             };
                             handleModuleSelect(processedModule);
                           }}
@@ -597,6 +722,9 @@ export default function CourseDetail() {
                       <Text style={styles.statusText}>
                         {selectedModule.isCompleted ? 'Completed' : 'In Progress'}
                       </Text>
+                      {selectedModule.isCompleted && (
+                        <Ionicons name="checkmark-circle" size={20} color="#4CAF50" style={{ marginLeft: 8 }} />
+                      )}
                     </View>
                   </View>
                   
@@ -604,6 +732,13 @@ export default function CourseDetail() {
                     <View style={styles.progressRow}>
                       <Text style={styles.progressLabel}>Time taken:</Text>
                       <Text style={styles.timeTaken}>{selectedModule.timeTaken}</Text>
+                    </View>
+                  )}
+                  
+                  {selectedModule.isCompleted && (
+                    <View style={styles.completionBanner}>
+                      <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+                      <Text style={styles.completionText}>🎉 Congratulations! You've completed this module</Text>
                     </View>
                   )}
                 </View>
@@ -1010,6 +1145,26 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontWeight: '500',
   },
+  nowPlayingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  nowPlayingText: {
+    fontSize: 12,
+    color: '#3D5CFF',
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  completedIndicator: {
+    marginRight: 8,
+  },
+  playingIndicator: {
+    marginRight: 8,
+    backgroundColor: '#E3F2FD',
+    borderRadius: 12,
+    padding: 4,
+  },
   playButton: {
     width: 32,
     height: 32,
@@ -1178,6 +1333,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#374151',
     fontWeight: '500',
+  },
+  completionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E8',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4CAF50',
+  },
+  completionText: {
+    fontSize: 14,
+    color: '#2E7D32',
+    fontWeight: '600',
+    marginLeft: 8,
+    flex: 1,
+    lineHeight: 18,
   },
 
   // Legacy styles (kept for compatibility)
