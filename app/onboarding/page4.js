@@ -4,8 +4,8 @@ import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Page4() {
-  const handleSignup = () => {
-    router.replace('/auth/signup'); // ✅ navigate to /auth/signup.js
+  const handleLogin = () => {
+    router.replace('/auth/login'); // ✅ navigate to /auth/login.js instead of signup
   };
 
   return (
@@ -20,9 +20,9 @@ export default function Page4() {
           style={styles.processImage}
         />
 
-        {/* Sign Up Button */}
-        <TouchableOpacity style={styles.button} onPress={handleSignup}>
-          <Text style={styles.buttonText}>Sign up</Text>
+        {/* Login Button */}
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Log in</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
