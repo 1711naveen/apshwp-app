@@ -1,3 +1,4 @@
+import Colors from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
@@ -145,18 +146,18 @@ export default function AppHeader({ title, showBackButton = false, onBackPress }
                                 style={styles.menuItem}
                                 onPress={openResourcesLink}
                             >
-                                <Ionicons name="library-outline" size={24} color="#3D5CFF" />
+                                <Ionicons name="library-outline" size={24} color={Colors.primary} />
                                 <Text style={styles.menuItemText}>Resources</Text>
-                                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+                                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
                             </TouchableOpacity>
 
                             <TouchableOpacity
                                 style={styles.menuItem}
                                 onPress={openNewsLink}
                             >
-                                <Ionicons name="newspaper-outline" size={24} color="#3D5CFF" />
+                                <Ionicons name="newspaper-outline" size={24} color={Colors.primary} />
                                 <Text style={styles.menuItemText}>News</Text>
-                                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+                                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -166,9 +167,9 @@ export default function AppHeader({ title, showBackButton = false, onBackPress }
                                     router.push('/course');
                                 }}
                             >
-                                <Ionicons name="book-outline" size={24} color="#3D5CFF" />
+                                <Ionicons name="book-outline" size={24} color={Colors.primary} />
                                 <Text style={styles.menuItemText}>Courses</Text>
-                                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+                                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -178,9 +179,9 @@ export default function AppHeader({ title, showBackButton = false, onBackPress }
                                     router.push('/quiz');
                                 }}
                             >
-                                <Ionicons name="help-circle-outline" size={24} color="#3D5CFF" />
+                                <Ionicons name="help-circle-outline" size={24} color={Colors.primary} />
                                 <Text style={styles.menuItemText}>Quiz</Text>
-                                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+                                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -190,9 +191,9 @@ export default function AppHeader({ title, showBackButton = false, onBackPress }
                                     router.push('/account');
                                 }}
                             >
-                                <Ionicons name="person-outline" size={24} color="#3D5CFF" />
+                                <Ionicons name="person-outline" size={24} color={Colors.primary} />
                                 <Text style={styles.menuItemText}>Profile</Text>
-                                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+                                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
                             </TouchableOpacity>
 
                             <View style={styles.menuDivider} />
@@ -201,8 +202,8 @@ export default function AppHeader({ title, showBackButton = false, onBackPress }
                                 style={styles.menuItem}
                                 onPress={handleLogout}
                             >
-                                <Ionicons name="log-out-outline" size={24} color="#FF6B6B" />
-                                <Text style={[styles.menuItemText, { color: '#FF6B6B' }]}>Logout</Text>
+                                <Ionicons name="log-out-outline" size={24} color={Colors.primary} />
+                                <Text style={[styles.menuItemText, { color: Colors.primary }]}>Logout</Text>
                             </TouchableOpacity>
                         </View>
                     </TouchableOpacity>

@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import CommonLayout from '../components/CommonLayout';
 import QuizDetail from '../components/QuizDetail';
+// import { Colors } from 'react-native/Libraries/NewAppScreen';
+import Colors from '@/constants/Colors';
 
 interface Choice {
   id: number;
@@ -390,7 +392,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   startButton: {
-    backgroundColor: '#3D5CFF',
+    backgroundColor: Colors.primary,
     display: 'flex',
     justifyContent: 'center',
     flexDirection: 'row',

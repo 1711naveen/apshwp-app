@@ -1,13 +1,13 @@
 import React from "react";
+import { StyleSheet } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Swiper from "react-native-swiper";
+import Colors from "../../constants/Colors";
 import Page1 from "./page1";
 import Page2 from "./page2";
 import Page3 from "./page3";
 import Page4 from "./page4";
-import SplashScreen from "./splash1";
 import Splash2 from "./splash2";
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StyleSheet } from "react-native";
 
 export default function OnboardingScreen() {
   return (
@@ -19,7 +19,7 @@ export default function OnboardingScreen() {
         horizontal={true}
         index={0}
       >
-        <SplashScreen />
+        {/* <SplashScreen /> */}
         <Splash2 />
         <Page1 />
         <Page2 />
@@ -34,6 +34,6 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F2F2F5',
+    backgroundColor: Colors.background.secondary,
   },
 });

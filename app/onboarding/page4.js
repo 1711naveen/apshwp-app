@@ -2,6 +2,7 @@ import { router } from 'expo-router'; // ✅ import router
 import React from 'react';
 import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Colors from '../../constants/Colors';
 
 export default function Page4() {
   const handleLogin = () => {
@@ -34,11 +35,11 @@ const { width, height } = Dimensions.get('window');
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background.primary,
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background.primary,
     paddingTop: 60,
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -49,6 +50,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     paddingHorizontal: 20,
+    color: Colors.text.primary,
   },
   processImage: {
     width: width * 0.9,
@@ -57,13 +59,13 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   button: {
-    backgroundColor: '#3D5CFF',
+    backgroundColor: Colors.primary,
     paddingVertical: 14,
     paddingHorizontal: 48,
     borderRadius: 8,
   },
   buttonText: {
-    color: '#fff',
+    color: Colors.white,
     fontWeight: 'bold',
     fontSize: 16,
   },

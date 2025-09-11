@@ -14,6 +14,8 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { API_ENDPOINTS } from '../../constants/API';
+import Colors from '../../constants/Colors';
 import { useAnalytics } from '../hooks/useAnalytics';
 
 export default function LoginScreen() {
@@ -49,7 +51,7 @@ export default function LoginScreen() {
     try {
       console.log('Attempting login with:', { login: email, password: password });
 
-      const response = await fetch('https://apshwp.ap.gov.in/api/login', {
+      const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -182,11 +184,11 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F2F2F5',
+    backgroundColor: Colors.background.secondary,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F5',
+    backgroundColor: Colors.background.secondary,
     paddingTop: 60,
   },
   topBox: {
@@ -197,10 +199,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#0D0D26',
+    color: Colors.text.primary,
   },
   formBox: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.background.primary,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -208,18 +210,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   label: {
-    color: '#0D0D26',
+    color: Colors.text.primary,
     fontSize: 14,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: Colors.border.light,
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
     fontSize: 16,
-    color: '#000',
+    color: Colors.text.primary,
   },
   passwordContainer: {
     flexDirection: 'row',
@@ -230,31 +232,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   forgotPassword: {
-    color: '#3D5CFF',
+    color: Colors.primary,
     fontSize: 12,
     alignSelf: 'flex-end',
     marginBottom: 16,
   },
   button: {
-    backgroundColor: '#3D5CFF',
+    backgroundColor: Colors.primary,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 10,
   },
   buttonText: {
-    color: '#fff',
+    color: Colors.white,
     fontSize: 16,
     fontWeight: 'bold',
   },
   signupText: {
     marginTop: 30,
     textAlign: 'center',
-    color: '#A0A0B2',
+    color: Colors.text.secondary,
     fontSize: 14,
   },
   signupLink: {
-    color: '#3D5CFF',
+    color: Colors.primary,
     fontWeight: 'bold',
   },
 });

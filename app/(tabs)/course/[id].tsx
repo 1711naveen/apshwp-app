@@ -13,9 +13,12 @@ import {
   View
 } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { API_ENDPOINTS } from '../../../constants/API';
 import CommonLayout from '../../components/CommonLayout';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { getUserInfo } from '../../utils/appStorage';
+import Colors from '@/constants/Colors';
+
 
 const { width } = Dimensions.get('window');
 
@@ -139,7 +142,7 @@ export default function CourseDetail() {
       const userInfo = await getUserInfo();
       const currentUserId = userInfo?.id || userInfo?.user_id || '1103';
       
-      const response = await fetch(`https://apshwp.ap.gov.in/api/courses/${courseId}?user_id=${currentUserId}`);
+      const response = await fetch(API_ENDPOINTS.COURSES.DETAIL_WITH_USER(courseId, currentUserId));
       const data: CourseApiResponse = await response.json();
       
       if (data.success) {
@@ -548,7 +551,7 @@ export default function CourseDetail() {
                           {/* Show currently playing status */}
                           {selectedModuleId === module.moduleId && (
                             <View style={styles.nowPlayingBadge}>
-                              <Ionicons name="play" size={12} color="#3D5CFF" />
+                              <Ionicons name="play" size={12} color={Colors.primary} />
                               <Text style={styles.nowPlayingText}>Now Playing</Text>
                             </View>
                           )}
@@ -698,7 +701,7 @@ export default function CourseDetail() {
                     style={styles.moduleInfoButton}
                     onPress={toggleMenu}
                   >
-                    <Ionicons name="list" size={20} color="#3D5CFF" />
+                    <Ionicons name="list" size={20} color={Colors.primary} />
                     <Text style={styles.moduleInfoText}>Modules</Text>
                   </TouchableOpacity>
                 </View>
@@ -1152,7 +1155,7 @@ const styles = StyleSheet.create({
   },
   nowPlayingText: {
     fontSize: 12,
-    color: '#3D5CFF',
+    color: Colors.primary,
     marginLeft: 4,
     fontWeight: '500',
   },
@@ -1176,8 +1179,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   playButtonSelected: {
-    backgroundColor: '#3D5CFF',
-    borderColor: '#3D5CFF',
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
 
   // Action buttons
@@ -1208,7 +1211,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#3D5CFF',
+    backgroundColor: Colors.primary,
     paddingVertical: 12,
     borderRadius: 8,
   },
@@ -1256,7 +1259,7 @@ const styles = StyleSheet.create({
     borderColor: '#3D5CFF',
   },
   moduleInfoText: {
-    color: '#3D5CFF',
+    color: Colors.primary,
     fontSize: 14,
     fontWeight: '600',
     marginLeft: 4,

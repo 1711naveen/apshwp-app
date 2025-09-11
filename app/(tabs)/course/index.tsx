@@ -11,9 +11,10 @@ import {
   Text,
   TouchableOpacity,
   View
-} from 'react-native';
+} from 'react-native'; 
 import CommonLayout from '../../components/CommonLayout';
 import { useAnalytics } from '../../hooks/useAnalytics';
+import Colors from '@/constants/Colors';
 
 const { width } = Dimensions.get('window');
 
@@ -285,7 +286,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   playButtonSmall: {
-    backgroundColor: '#3D5CFF',
+    backgroundColor: Colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,

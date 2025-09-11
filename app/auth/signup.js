@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAnalytics } from '../hooks/useAnalytics';
+import Colors from '../../constants/Colors';
 
 export default function SignUpScreen() {
   const [fullName, setFullName] = useState('');
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   button: {
-    backgroundColor: '#3D5CFF',
+    backgroundColor: Colors.primary,
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',
@@ -306,7 +307,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   loginLink: {
-    color: '#3D5CFF',
+    color: Colors.primary,
     fontWeight: 'bold',
   },
 });

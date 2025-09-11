@@ -1,3 +1,4 @@
+import Colors from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { useState } from 'react';
@@ -435,7 +436,7 @@ const styles = StyleSheet.create({
     },
     progressFill: {
         height: '100%',
-        backgroundColor: '#3D5CFF',
+        backgroundColor: Colors.primary,
         borderRadius: 2,
     },
     progressText: {
@@ -486,7 +487,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
     },
     choiceButtonSelected: {
-        borderColor: '#3D5CFF',
+        borderColor: Colors.primary,
         backgroundColor: '#F7F9FF',
     },
     choiceIndicator: {
@@ -499,7 +500,7 @@ const styles = StyleSheet.create({
         marginRight: 12,
     },
     choiceIndicatorSelected: {
-        backgroundColor: '#3D5CFF',
+        backgroundColor: Colors.primary,
     },
     choiceLabel: {
         fontSize: 14,
@@ -516,7 +517,7 @@ const styles = StyleSheet.create({
         lineHeight: 22,
     },
     choiceTextSelected: {
-        color: '#3D5CFF',
+        color: Colors.primary,
         fontWeight: '500',
     },
     navigationContainer: {
@@ -540,16 +541,16 @@ const styles = StyleSheet.create({
         borderColor: '#ccc',
     },
     nextButton: {
-        backgroundColor: '#3D5CFF',
-        borderColor: '#3D5CFF',
+        backgroundColor: Colors.primary,
+        borderColor: Colors.primary,
     },
     navButtonText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#3D5CFF',
+        color: Colors.primary,
     },
     navButtonTextDisabled: {
-        color: '#ccc',
+        color: '#fff',
     },
     nextButtonText: {
         color: '#fff',

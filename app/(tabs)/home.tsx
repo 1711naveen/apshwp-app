@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { Dimensions, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import HomeLayout from "../components/HomeLayout";
 import { useAnalytics } from '../hooks/useAnalytics';
+import Colors from '@/constants/Colors';
 
 const { width } = Dimensions.get("window");
 
@@ -201,18 +202,18 @@ function Home() {
                 style={styles.menuItem}
                 onPress={openResourcesLink}
               >
-                <Ionicons name="library-outline" size={24} color="#3D5CFF" />
+                <Ionicons name="library-outline" size={24} color={Colors.primary} />
                 <Text style={styles.menuItemText}>Resources</Text>
-                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.menuItem}
                 onPress={openNewsLink}
               >
-                <Ionicons name="newspaper-outline" size={24} color="#3D5CFF" />
+                <Ionicons name="newspaper-outline" size={24} color={Colors.primary} />
                 <Text style={styles.menuItemText}>News</Text>
-                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -222,9 +223,9 @@ function Home() {
                   router.push('/course');
                 }}
               >
-                <Ionicons name="book-outline" size={24} color="#3D5CFF" />
+                <Ionicons name="book-outline" size={24} color={Colors.primary} />
                 <Text style={styles.menuItemText}>Courses</Text>
-                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -234,9 +235,9 @@ function Home() {
                   router.push('/quiz');
                 }}
               >
-                <Ionicons name="help-circle-outline" size={24} color="#3D5CFF" />
+                <Ionicons name="help-circle-outline" size={24} color={Colors.primary} />
                 <Text style={styles.menuItemText}>Quiz</Text>
-                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -246,9 +247,9 @@ function Home() {
                   router.push('/account');
                 }}
               >
-                <Ionicons name="person-outline" size={24} color="#3D5CFF" />
+                <Ionicons name="person-outline" size={24} color={Colors.primary} />
                 <Text style={styles.menuItemText}>Profile</Text>
-                <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" />
+                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
               </TouchableOpacity>
 
               <View style={styles.menuDivider} />
@@ -337,10 +338,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#0D0D26",
+    color: Colors.primary,
   },
   viewAll: {
-    color: "#3D5CFF",
+    color: Colors.primary,
     fontWeight: "bold",
     fontSize: 12,
   },
@@ -416,7 +417,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 16,
-    color: '#0D0D26',
+    color: Colors.primary,
     marginLeft: 16,
     flex: 1,
     fontWeight: '500',
