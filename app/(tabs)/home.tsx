@@ -1,433 +1,329 @@
-import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useState } from "react";
-import { Dimensions, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import HomeLayout from "../components/HomeLayout";
-import { useAnalytics } from '../hooks/useAnalytics';
-import Colors from '@/constants/Colors';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Colors from "../../constants/Colors";
+import CommonLayout from "../components/CommonLayout";
+import { useAnalytics } from "../hooks/useAnalytics";
+import { getUserInfo } from "../utils/appStorage";
 
-const { width } = Dimensions.get("window");
-
-const modules = [
-  {
-    id: "1",
-    title: "Metabolic Health (NCDs Prevention)",
-    image: require("../../assets/images/app-images/illustration_1.png"),
-  },
-  {
-    id: "2",
-    title: "Road Safety",
-    image: require("../../assets/images/app-images/illustration_2.png"),
-  },
-  {
-    id: "3",
-    title: "Heart Health Awareness",
-    image: require("../../assets/images/app-images/illustration_3.png"),
-  },
-];
-
-function Home() {
-  const [name, setName] = useState('');
-  const [menuVisible, setMenuVisible] = useState(false);
+const HomeScreen = () => {
+  const router = useRouter();
+  const { trackEvent } = useAnalytics();
   const [userInfo, setUserInfo] = useState<any>(null);
-  
-  // Initialize analytics hook
-  const { trackButtonPress, trackEvent } = useAnalytics();
+  const [currentDate, setCurrentDate] = useState('');
 
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const storedUser = await AsyncStorage.getItem('userInfo');
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          setUserInfo(user);
-          // Try different possible name fields from the JWT token
-          const userName = user.name || user.username || user.full_name || user.firstName || 'User';
-          setName(userName);
-        }
-      } catch (error) {
-        console.error('Error loading user info:', error);
-        setName('User');
-      }
-    };
-    loadUser();
+    loadUserInfo();
+    setCurrentDate(new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }));
   }, []);
 
-  const router = useRouter();
-
-  const openResourcesLink = async () => {
+  const loadUserInfo = async () => {
     try {
-      await trackButtonPress('resources_link', 'home');
-      await WebBrowser.openBrowserAsync('https://apshwp.ap.gov.in/en#resourceSection');
-      setMenuVisible(false);
+      const info = await getUserInfo();
+      setUserInfo(info);
     } catch (error) {
-      console.error('Error opening browser:', error);
+      console.error('Error loading user info:', error);
     }
   };
 
-  const openNewsLink = async () => {
-    try {
-      await trackButtonPress('news_link', 'home');
-      await WebBrowser.openBrowserAsync('https://apshwp.ap.gov.in/en/category/2');
-      setMenuVisible(false);
-    } catch (error) {
-      console.error('Error opening browser:', error);
-    }
+  const handleNavigateToQuiz = () => {
+    trackEvent('quiz_navigate_from_home');
+    router.push('/(tabs)/quiz');
   };
 
-  const handleLogout = async () => {
+  const handleNavigateToCourses = () => {
+    trackEvent('courses_navigate_from_home');
+    router.push('/(tabs)/course');
+  };
+
+  const handleCalculateBMI = async () => {
+    trackEvent('bmi_calculator_clicked');
+    // Open BMI calculator in in-app browser
     try {
-      await trackEvent('logout', { screen: 'home' });
-      await AsyncStorage.removeItem('authToken');
-      await AsyncStorage.removeItem('userInfo');
-      setMenuVisible(false);
-      router.replace('/auth/login');
+      await WebBrowser.openBrowserAsync('https://apshwp.ap.gov.in/en/bmi');
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error('Error opening BMI calculator:', error);
     }
   };
 
   return (
-    <HomeLayout>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.hamburgerButton}
-          onPress={() => setMenuVisible(true)}
-        >
-          <Ionicons name="menu-outline" size={28} color="#0D0D26" />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.greeting}>Hi, {name || 'User'}!</Text>
-          <Text style={styles.subGreeting}>Let's start learning</Text>
+    <CommonLayout title="Home">
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.date}>{currentDate}</Text>
+        <Text style={styles.welcome}>
+          Welcome, <Text style={styles.name}>{userInfo?.name || 'Student'}!</Text>
+        </Text>
+        <Text style={styles.subtitle}>Always Stay Updated in Your Student Portal</Text>
+
+        {/* Stats Row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Ionicons name="school" size={28} color={Colors.primary} />
+            <Text style={styles.statNumber}>1</Text>
+            <Text style={styles.statLabel}>Quiz Attempted</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="ribbon" size={28} color={Colors.primary} />
+            <Text style={styles.statNumber}>1</Text>
+            <Text style={styles.statLabel}>Certificate Earned</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="people" size={28} color={Colors.primary} />
+            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statLabel}>Total Referral</Text>
+          </View>
         </View>
-        <TouchableOpacity onPress={() => setMenuVisible(true)}>
-          <Image
-            source={require("../../assets/images/app-images/Avatar.png")}
-            style={styles.avatar}
-          />
-        </TouchableOpacity>
-      </View>
 
-      {/* Flowchart Box */}
-      <View >
-        <Image
-          source={require("../../assets/images/app-images/flowchart.png")}
-          style={styles.flowchartImage}
-          resizeMode="contain"
-        />
-      </View>
+        {/* Completed Quiz */}
+        <Text style={styles.sectionTitle}>Completed Quiz</Text>
+        <View style={styles.card}>
+          <View style={styles.cardRow}>
+            <Text style={styles.cardLabel}>Quiz: </Text>
+            <Text style={styles.cardValue}>Quiz on HIV / AIDS Prevention</Text>
+          </View>
+          <View style={styles.cardRow}>
+            <Text style={styles.cardLabel}>Score ( % ): </Text>
+            <Text style={styles.cardValue}>80</Text>
+          </View>
+          <View style={styles.cardRow}>
+            <Text style={styles.cardLabel}>Certificate: </Text>
+            <TouchableOpacity style={styles.downloadButton}>
+              <Ionicons name="download" size={20} color={Colors.primary} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.cardRow}>
+            <Text style={styles.cardLabel}>Badge: </Text>
+            <TouchableOpacity style={styles.downloadButton}>
+              <Ionicons name="medal" size={20} color={Colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
 
-      {/* E-Module Section */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>E-Module</Text>
-        <TouchableOpacity onPress={() => router.push('/course')}>
-          <Text style={styles.viewAll}>View All</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Completed Module */}
+        <Text style={styles.sectionTitle}>Completed Module</Text>
+        <View style={styles.card}>
+          <View style={styles.cardRow}>
+            <Text style={styles.cardLabel}>Module: </Text>
+            <Text style={styles.cardValue}>E - Module on Metabolic Health (NCDs Prevention)</Text>
+          </View>
+          <View style={styles.cardRow}>
+            <Text style={styles.cardLabel}>Score ( % ): </Text>
+            <Text style={styles.cardValue}>80</Text>
+          </View>
+          <View style={styles.cardRow}>
+            <Text style={styles.cardLabel}>Certificate: </Text>
+            <TouchableOpacity style={styles.downloadButton}>
+              <Ionicons name="download" size={20} color={Colors.primary} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.cardRow}>
+            <Text style={styles.cardLabel}>Badge: </Text>
+            <TouchableOpacity style={styles.downloadButton}>
+              <Ionicons name="medal" size={20} color={Colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.moduleScroll}
-      >
-        <TouchableOpacity
-          onPress={() => console.log("Pressed: Metabolic Health (NCDs Prevention)")}
-          style={styles.imageWrapper}
-        >
-          <Image
-            source={require("../../assets/images/app-images/illustration_1.png")}
-            style={styles.moduleImage}
-            resizeMode="cover"
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => console.log("Pressed: Road Safety")}
-          style={styles.imageWrapper}
-        >
-          <Image
-            source={require("../../assets/images/app-images/illustration_1.png")}
-            style={styles.moduleImage}
-            resizeMode="cover"
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => console.log("Pressed: Heart Health Awareness")}
-          style={styles.imageWrapper}
-        >
-          <Image
-            source={require("../../assets/images/app-images/illustration_1.png")}
-            style={styles.moduleImage}
-            resizeMode="cover"
-          />
-        </TouchableOpacity>
-      </ScrollView>
-
-      {/* Hamburger Menu Modal */}
-      <Modal
-        visible={menuVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setMenuVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          onPress={() => setMenuVisible(false)}
-          activeOpacity={1}
-        >
-          <TouchableOpacity
-            style={styles.menuContainer}
-            activeOpacity={1}
-          >
-            {/* Profile Section */}
-            <View style={styles.profileSection}>
-              <Image
-                source={require("../../assets/images/app-images/Avatar.png")}
-                style={styles.menuAvatar}
-              />
-              <Text style={styles.menuUserName}>{name || 'User'}</Text>
-              <Text style={styles.menuUserEmail}>
-                {userInfo?.email || userInfo?.login || 'user@example.com'}
-              </Text>
-            </View>
-
-            {/* Menu Items */}
-            <View style={styles.menuItems}>
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={openResourcesLink}
-              >
-                <Ionicons name="library-outline" size={24} color={Colors.primary} />
-                <Text style={styles.menuItemText}>Resources</Text>
-                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={openNewsLink}
-              >
-                <Ionicons name="newspaper-outline" size={24} color={Colors.primary} />
-                <Text style={styles.menuItemText}>News</Text>
-                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => {
-                  setMenuVisible(false);
-                  router.push('/course');
-                }}
-              >
-                <Ionicons name="book-outline" size={24} color={Colors.primary} />
-                <Text style={styles.menuItemText}>Courses</Text>
-                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => {
-                  setMenuVisible(false);
-                  router.push('/quiz');
-                }}
-              >
-                <Ionicons name="help-circle-outline" size={24} color={Colors.primary} />
-                <Text style={styles.menuItemText}>Quiz</Text>
-                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => {
-                  setMenuVisible(false);
-                  router.push('/account');
-                }}
-              >
-                <Ionicons name="person-outline" size={24} color={Colors.primary} />
-                <Text style={styles.menuItemText}>Profile</Text>
-                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
-              </TouchableOpacity>
-
-              <View style={styles.menuDivider} />
-
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={handleLogout}
-              >
-                <Ionicons name="log-out-outline" size={24} color="#FF6B6B" />
-                <Text style={[styles.menuItemText, { color: '#FF6B6B' }]}>Logout</Text>
-                {/* <Ionicons name="chevron-forward-outline" size={20} color="#A0A0B2" /> */}
-              </TouchableOpacity>
-            </View>
+        {/* Bottom Buttons */}
+        <View style={styles.bottomRow}>
+          <TouchableOpacity style={styles.bottomBtn} onPress={handleNavigateToQuiz}>
+            <Ionicons name="help-circle" size={20} color={Colors.primary} />
+            <Text style={styles.bottomBtnText}>PLAY QUIZ</Text>
           </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
+          <TouchableOpacity style={styles.bottomBtn} onPress={handleCalculateBMI}>
+            <Ionicons name="calculator" size={20} color={Colors.primary} />
+            <Text style={styles.bottomBtnText}>CALCULATE BMI</Text>
+          </TouchableOpacity>
+        </View>
 
-    </ScrollView>
-    </HomeLayout>
+        {/* E-Modules Section */}
+        <Text style={styles.sectionTitle}>Available E-Modules</Text>
+        <TouchableOpacity style={styles.moduleCard} onPress={handleNavigateToCourses}>
+          <View style={styles.moduleCardContent}>
+            <Ionicons name="book" size={24} color={Colors.primary} />
+            <View style={styles.moduleCardText}>
+              <Text style={styles.moduleTitle}>Explore E-Modules</Text>
+              <Text style={styles.moduleSubtitle}>Learn with interactive courses</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={Colors.text.secondary} />
+          </View>
+        </TouchableOpacity>
+
+      </ScrollView>
+    </CommonLayout>
   );
-}
+};
+
+export default HomeScreen;
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: 20,
+  },
   container: {
     flex: 1,
-    paddingHorizontal: 20,
+    backgroundColor: Colors.white
   },
-  header: {
-    marginTop: 20,
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    margin: 16,
   },
-  hamburgerButton: {
-    padding: 4,
-  },
-  headerCenter: {
-    flex: 1,
+  date: {
+    marginTop: 20,
     marginLeft: 16,
+    color: Colors.text.secondary
   },
-  greeting: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#0D0D26",
-  },
-  subGreeting: {
-    fontSize: 14,
-    color: "#A0A0B2",
+  welcome: {
+    fontSize: 28,
+    marginLeft: 16,
     marginTop: 4,
+    color: Colors.text.primary
   },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#ddd",
+  name: {
+    color: Colors.primary,
+    fontWeight: "bold"
   },
-  flowchartBox: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 12,
-    marginTop: 30,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
+  subtitle: {
+    marginLeft: 16,
+    marginBottom: 12,
+    color: Colors.text.secondary
+  },
+
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 16
+  },
+  statCard: {
+    alignItems: "center",
+    backgroundColor: Colors.background.secondary,
+    padding: 12,
+    borderRadius: 10,
+    width: 100,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  statNumber: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: Colors.primary
+  },
+  statLabel: {
+    fontSize: 12,
+    textAlign: "center",
+    color: Colors.text.primary
+  },
+
+  sectionTitle: {
+    marginLeft: 16,
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.text.primary
+  },
+  card: {
+    backgroundColor: Colors.white,
+    margin: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: 10,
+    shadowColor: Colors.shadow.light,
     shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
-  flowchartTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#000",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  flowchartImage: {
-    width: "100%",
-    height: 180,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 30,
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: Colors.primary,
-  },
-  viewAll: {
-    color: Colors.primary,
-    fontWeight: "bold",
-    fontSize: 12,
-  },
-  moduleScroll: {
-    paddingBottom: 20,
-  },
-  imageWrapper: {
-    marginRight: 16,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  moduleImage: {
-    width: 200,
-    height: 120,
-    borderRadius: 12,
-  },
-  // Hamburger Menu Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  menuContainer: {
-    backgroundColor: '#fff',
-    width: '100%',
-    maxHeight: '75%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  profileSection: {
-    alignItems: 'center',
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
-    marginBottom: 20,
-  },
-  menuAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginBottom: 12,
-  },
-  menuUserName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0D0D26',
-    marginBottom: 4,
-  },
-  menuUserEmail: {
+  cardLabel: {
     fontSize: 14,
-    color: '#A0A0B2',
+    fontWeight: "bold",
+    color: Colors.primary
   },
-  menuItems: {
-    paddingVertical: 10,
+  cardValue: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    flex: 1
   },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 4,
-    backgroundColor: '#F8F9FA',
+  cardRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 6,
   },
-  menuItemText: {
-    fontSize: 16,
+  downloadButton: {
+    alignSelf: 'flex-start',
+    padding: 4,
+  },
+
+  bottomRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginVertical: 16,
+  },
+  bottomBtn: {
+    flexDirection: "row",
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    padding: 12,
+    borderRadius: 10,
+    width: 150,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Colors.background.primary,
+  },
+  bottomBtnText: {
+    marginLeft: 6,
     color: Colors.primary,
-    marginLeft: 16,
-    flex: 1,
-    fontWeight: '500',
+    fontWeight: "bold"
   },
-  menuDivider: {
-    height: 1,
-    backgroundColor: '#E5E5E5',
-    marginVertical: 12,
+
+  moduleCard: {
+    backgroundColor: Colors.white,
+    margin: 12,
+    borderRadius: 10,
+    shadowColor: Colors.shadow.light,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  moduleCardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+  },
+  moduleCardText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  moduleTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  moduleSubtitle: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+  },
+
+  navBar: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderColor: Colors.border.light,
+    backgroundColor: Colors.white,
+  },
+  navText: {
+    fontSize: 12,
+    textAlign: "center",
+    color: Colors.text.secondary
   },
 });
-
-export default Home;
-
