@@ -58,6 +58,12 @@ export const API_ENDPOINTS = {
     TRACK_EVENT: `${BASE_URL}/api/analytics/event`,
     TRACK_PAGE: `${BASE_URL}/api/analytics/page`,
   },
+  
+  // Theme endpoints
+  THEMES: {
+    LIST: `${BASE_URL}/api/theme`,
+    DETAIL: (id: string | number) => `${BASE_URL}/api/theme/${id}`,
+  },
 } as const;
 
 // HTTP request configuration

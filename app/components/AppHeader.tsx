@@ -164,6 +164,18 @@ export default function AppHeader({ title, showBackButton = false, onBackPress }
                                 style={styles.menuItem}
                                 onPress={() => {
                                     setMenuVisible(false);
+                                    router.push('/learn');
+                                }}
+                            >
+                                <Ionicons name="school-outline" size={24} color={Colors.primary} />
+                                <Text style={styles.menuItemText}>Learn</Text>
+                                <Ionicons name="chevron-forward-outline" size={20} color={Colors.primary} />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.menuItem}
+                                onPress={() => {
+                                    setMenuVisible(false);
                                     router.push('/course');
                                 }}
                             >
